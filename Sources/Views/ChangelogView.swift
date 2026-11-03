@@ -47,8 +47,6 @@ struct ChangelogView: View {
                 }
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(AppBackground())
         .navigationTitle("更新日志")
         .navigationBarTitleDisplayMode(.inline)
     }

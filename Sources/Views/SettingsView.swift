@@ -64,8 +64,6 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .scrollContentBackground(.hidden)
-        .background(AppBackground())
         .navigationTitle("设置")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: memos.count) {

@@ -39,6 +39,7 @@ struct RootView: View {
                 )
                 .frame(width: drawerWidth)
                 .frame(maxHeight: .infinity)
+                .background(Color(.systemGroupedBackground).ignoresSafeArea())
                 .offset(x: shift - drawerWidth)
                 .accessibilityHidden(progress == 0)
 
@@ -68,7 +69,7 @@ struct RootView: View {
             .onAppear { drawerWidth = min(geo.size.width * 0.82, 340) }
             .onChange(of: geo.size.width) { _, w in drawerWidth = min(w * 0.82, 340) }
         }
-        .background(AppBackground())
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .background(
             DrawerPanGesture(
                 isOpen: drawerOpen,

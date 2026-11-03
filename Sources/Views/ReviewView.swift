@@ -47,7 +47,7 @@ struct ReviewView: View {
                 .indexViewStyle(.page(backgroundDisplayMode: .always))
             }
         }
-        .background(AppBackground())
+        .background(Color(.systemGroupedBackground))
         .navigationTitle("每日回顾")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

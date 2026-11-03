@@ -51,7 +51,7 @@ struct MemoCard: View {
         }
         .padding(14)
         .frame(maxWidth: .infinity, alignment: .leading)
-        .glassCard(cornerRadius: 22)
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .contextMenu { menuItems }
         .fullScreenCover(item: $preview) { item in
             ImagePreview(data: item.data)
@@ -157,11 +157,11 @@ struct ImagePreview: View {
             Button {
                 dismiss()
             } label: {
-                Image(systemName: "xmark")
-                    .font(.headline)
-                    .frame(width: 26, height: 26)
+                Image(systemName: "xmark.circle.fill")
+                    .font(.title)
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .white.opacity(0.25))
             }
-            .glassButton()
             .padding()
         }
         .onTapGesture { dismiss() }

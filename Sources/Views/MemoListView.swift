@@ -57,7 +57,7 @@ struct MemoListView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 110)
             }
-            .background(AppBackground())
+            .background(Color(.systemGroupedBackground))
             .overlay {
                 if items.isEmpty {
                     if search.isEmpty {
@@ -76,11 +76,11 @@ struct MemoListView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
-                    .frame(width: 36, height: 36)
+                    .foregroundStyle(.white)
+                    .frame(width: 58, height: 58)
+                    .background(accent, in: Circle())
+                    .shadow(color: accent.opacity(0.4), radius: 10, y: 4)
             }
-            .glassButton(prominent: true, tint: accent)
-            .controlSize(.large)
-            .shadow(color: accent.opacity(0.3), radius: 12, y: 5)
             .accessibilityIdentifier("newMemo")
             .accessibilityLabel("新建笔记")
             .padding(.trailing, 22)

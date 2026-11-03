@@ -15,8 +15,8 @@ targets:
       path: Config/Info.plist
       properties:
         CFBundleDisplayName: Jin Notes
-        CFBundleShortVersionString: "1.7.0"
-        CFBundleVersion: "14"
+        CFBundleShortVersionString: "1.7.1"
+        CFBundleVersion: "15"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -24,6 +24,8 @@ targets:
         UIApplicationSceneManifest:
           UIApplicationSupportsMultipleScenes: false
         ITSAppUsesNonExemptEncryption: false
+        # 保持经典界面风格，不启用 iOS 26 液态玻璃
+        UIDesignRequiresCompatibility: true
         NSPhotoLibraryUsageDescription: 用于在笔记中添加图片
         UIBackgroundModes:
           - remote-notification
@@ -43,8 +45,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        MARKETING_VERSION: "1.7.0"
-        CURRENT_PROJECT_VERSION: "14"
+        MARKETING_VERSION: "1.7.1"
+        CURRENT_PROJECT_VERSION: "15"
         ENABLE_PREVIEWS: YES
   ShinianUITests:
     type: bundle.ui-testing

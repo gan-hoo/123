@@ -60,9 +60,9 @@ struct ComposerView: View {
                             ForEach(tags, id: \.self) { tag in
                                 Button("#" + tag) { apply(tag) }
                                     .font(.subheadline)
-                                    .foregroundStyle(accent)
-                                    .glassButton(shape: .capsule)
-                                    .controlSize(.small)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(accent.opacity(0.12), in: Capsule())
                             }
                         }
                         .padding(.horizontal, 16)
@@ -70,6 +70,7 @@ struct ComposerView: View {
                     }
                 }
 
+                Divider()
                 toolbarRow
             }
             .navigationTitle(memo == nil ? "新建笔记" : "编辑笔记")
@@ -142,44 +143,35 @@ struct ComposerView: View {
     }
 
     private var toolbarRow: some View {
-        HStack(spacing: 10) {
+        HStack(spacing: 22) {
             Button { insertTag() } label: {
                 Image(systemName: "number")
-                    .frame(width: 24, height: 24)
             }
-            .glassButton()
             .accessibilityIdentifier("insertTag")
-
             PhotosPicker(selection: $pickerItems,
                          maxSelectionCount: max(1, maxImages - images.count),
                          matching: .images) {
                 Image(systemName: "photo")
-                    .frame(width: 24, height: 24)
             }
-            .glassButton()
             .disabled(images.count >= maxImages)
-
             Button { insertList() } label: {
                 Image(systemName: "list.bullet")
-                    .frame(width: 24, height: 24)
             }
-            .glassButton()
             .accessibilityIdentifier("insertList")
-
             Spacer()
-
             Button(action: save) {
                 Image(systemName: "paperplane.fill")
-                    .font(.body.weight(.semibold))
-                    .frame(width: 40, height: 24)
+                    .font(.body)
+                    .foregroundStyle(.white)
+                    .frame(width: 54, height: 34)
+                    .background(canSave ? accent : Color.gray.opacity(0.35), in: Capsule())
             }
-            .glassButton(prominent: canSave, tint: canSave ? accent : nil, shape: .capsule)
             .disabled(!canSave)
             .accessibilityIdentifier("sendMemo")
             .accessibilityLabel("发送")
         }
         .font(.title3)
-        .controlSize(.large)
+        .foregroundStyle(.secondary)
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
     }
