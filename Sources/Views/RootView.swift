@@ -33,14 +33,12 @@ struct RootView: View {
                         }
                     }
             }
-            .simultaneousGesture(openGesture, including: drawerOpen || !path.isEmpty ? .subviews : .all)
 
             Color.black
                 .opacity(0.35 * progress)
                 .ignoresSafeArea()
                 .allowsHitTesting(progress > 0.01)
                 .onTapGesture { setDrawer(open: false) }
-                .gesture(closeGesture)
 
             SidebarView(
                 filter: filter,
@@ -59,59 +57,35 @@ struct RootView: View {
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
             .shadow(color: .black.opacity(0.15 * progress), radius: 12, x: 4)
             .offset(x: (progress - 1) * drawerWidth)
-            .simultaneousGesture(closeGesture)
             .accessibilityHidden(progress == 0)
         }
+        .background(
+            DrawerPanGesture(
+                isOpen: drawerOpen,
+                canOpen: path.isEmpty,
+                edgeWidth: edgeWidth,
+                onChanged: { tx in
+                    isDragging = true
+                    dragX = drawerOpen ? min(0, tx) : max(0, tx)
+                },
+                onEnded: { tx, vx in
+                    isDragging = false
+                    let projected = tx + vx * 0.2
+                    if drawerOpen {
+                        setDrawer(open: !(tx < -drawerWidth * 0.3 || projected < -drawerWidth * 0.6))
+                    } else {
+                        setDrawer(open: tx > drawerWidth * 0.35 || projected > drawerWidth * 0.8)
+                    }
+                }
+            )
+        )
         .task {
             seedIfNeeded()
             purgeTrash()
         }
     }
 
-    // MARK: - 侧边栏手势
-
-    /// 在主页左侧边缘向右滑：侧边栏跟随手指拉出
-    private var openGesture: some Gesture {
-        DragGesture(minimumDistance: 12, coordinateSpace: .global)
-            .onChanged { v in
-                guard !drawerOpen, path.isEmpty else { return }
-                if !isDragging {
-                    let dx = v.translation.width
-                    let dy = v.translation.height
-                    // 只接受从左边缘开始、以水平向右为主的滑动
-                    guard v.startLocation.x <= edgeWidth, dx > 0, abs(dx) > abs(dy) else { return }
-                    isDragging = true
-                }
-                dragX = max(0, v.translation.width)
-            }
-            .onEnded { v in
-                guard isDragging else { return }
-                isDragging = false
-                let shouldOpen = v.translation.width > drawerWidth * 0.35
-                    || v.predictedEndTranslation.width > drawerWidth * 0.8
-                setDrawer(open: shouldOpen)
-            }
-    }
-
-    /// 侧边栏打开时向左滑：跟随手指收回
-    private var closeGesture: some Gesture {
-        DragGesture(minimumDistance: 12, coordinateSpace: .global)
-            .onChanged { v in
-                guard drawerOpen else { return }
-                if !isDragging {
-                    guard abs(v.translation.width) > abs(v.translation.height) else { return }
-                    isDragging = true
-                }
-                dragX = min(0, v.translation.width)
-            }
-            .onEnded { v in
-                guard isDragging else { return }
-                isDragging = false
-                let shouldClose = v.translation.width < -drawerWidth * 0.3
-                    || v.predictedEndTranslation.width < -drawerWidth * 0.6
-                setDrawer(open: !shouldClose)
-            }
-    }
+    // MARK: - 侧边栏
 
     private func setDrawer(open: Bool) {
         if open && !drawerOpen { Haptics.light() }
