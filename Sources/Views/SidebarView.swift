@@ -24,10 +24,10 @@ struct SidebarView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 10) {
-                    Image(systemName: "bolt.fill")
-                        .foregroundStyle(.white)
-                        .frame(width: 34, height: 34)
-                        .background(accent, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    Image("Logo")
+                        .resizable()
+                        .frame(width: 36, height: 36)
+                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                     Text("拾念")
                         .font(.title2.bold())
                     Spacer()
