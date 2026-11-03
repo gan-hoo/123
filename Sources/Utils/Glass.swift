@@ -74,6 +74,59 @@ extension View {
     }
 }
 
+enum GlassButtonShape { case circle, capsule }
+
+extension View {
+    /// 玻璃按钮：iOS 26 使用系统 .glass / .glassProminent 按钮样式。
+    /// 不要把 glassEffect 放进按钮的 label 里，否则在 iOS 26 上按钮可能点不动。
+    @ViewBuilder
+    func glassButton(prominent: Bool = false, tint: Color? = nil, shape: GlassButtonShape = .circle) -> some View {
+        #if compiler(>=6.2)
+        if #available(iOS 26.0, *) {
+            if prominent {
+                self.buttonStyle(.glassProminent)
+                    .buttonBorderShape(shape == .circle ? .circle : .capsule)
+                    .tint(tint)
+            } else {
+                self.buttonStyle(.glass)
+                    .buttonBorderShape(shape == .circle ? .circle : .capsule)
+                    .tint(tint)
+            }
+        } else {
+            self.buttonStyle(LegacyGlassButtonStyle(prominent: prominent, tint: tint, circle: shape == .circle))
+        }
+        #else
+        self.buttonStyle(LegacyGlassButtonStyle(prominent: prominent, tint: tint, circle: shape == .circle))
+        #endif
+    }
+}
+
+/// iOS 17/18 上的玻璃按钮替代样式
+struct LegacyGlassButtonStyle: ButtonStyle {
+    let prominent: Bool
+    let tint: Color?
+    let circle: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        let shape: AnyShape = circle ? AnyShape(Circle()) : AnyShape(Capsule())
+        configuration.label
+            .padding(circle ? 10 : 12)
+            .padding(.horizontal, circle ? 0 : 4)
+            .foregroundStyle(prominent ? AnyShapeStyle(Color.white) : AnyShapeStyle(tint ?? Color.primary))
+            .background {
+                if prominent, let tint {
+                    shape.fill(tint)
+                } else {
+                    shape.fill(.ultraThinMaterial)
+                }
+            }
+            .overlay { shape.stroke(.white.opacity(0.25), lineWidth: 0.5) }
+            .shadow(color: .black.opacity(0.1), radius: 8, y: 3)
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
+    }
+}
+
 /// 玻璃按钮的按压反馈。
 /// 注意：按钮内的玻璃不能设为 interactive，否则 iOS 26 上玻璃会吞掉点击，按钮不触发。
 struct GlassPressStyle: ButtonStyle {

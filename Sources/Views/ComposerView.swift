@@ -60,9 +60,9 @@ struct ComposerView: View {
                             ForEach(tags, id: \.self) { tag in
                                 Button("#" + tag) { apply(tag) }
                                     .font(.subheadline)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .glassCapsule(tint: accent.opacity(0.25))
+                                    .foregroundStyle(accent)
+                                    .glassButton(shape: .capsule)
+                                    .controlSize(.small)
                             }
                         }
                         .padding(.horizontal, 16)
@@ -143,44 +143,43 @@ struct ComposerView: View {
 
     private var toolbarRow: some View {
         HStack(spacing: 10) {
-            HStack(spacing: 10) {
-                Button { insertTag() } label: {
-                    Image(systemName: "number")
-                        .frame(width: 44, height: 44)
-                        .glassCircle()
-                }
-                .accessibilityIdentifier("insertTag")
-                PhotosPicker(selection: $pickerItems,
-                             maxSelectionCount: max(1, maxImages - images.count),
-                             matching: .images) {
-                    Image(systemName: "photo")
-                        .frame(width: 44, height: 44)
-                        .glassCircle()
-                }
-                .disabled(images.count >= maxImages)
-                Button { insertList() } label: {
-                    Image(systemName: "list.bullet")
-                        .frame(width: 44, height: 44)
-                        .glassCircle()
-                }
-                .accessibilityIdentifier("insertList")
+            Button { insertTag() } label: {
+                Image(systemName: "number")
+                    .frame(width: 24, height: 24)
             }
-            .glassGroup(spacing: 10)
+            .glassButton()
+            .accessibilityIdentifier("insertTag")
+
+            PhotosPicker(selection: $pickerItems,
+                         maxSelectionCount: max(1, maxImages - images.count),
+                         matching: .images) {
+                Image(systemName: "photo")
+                    .frame(width: 24, height: 24)
+            }
+            .glassButton()
+            .disabled(images.count >= maxImages)
+
+            Button { insertList() } label: {
+                Image(systemName: "list.bullet")
+                    .frame(width: 24, height: 24)
+            }
+            .glassButton()
+            .accessibilityIdentifier("insertList")
+
             Spacer()
+
             Button(action: save) {
                 Image(systemName: "paperplane.fill")
                     .font(.body.weight(.semibold))
-                    .foregroundStyle(canSave ? Color.white : Color.secondary)
-                    .frame(width: 64, height: 44)
-                    .glassCapsule(tint: canSave ? accent : nil)
+                    .frame(width: 40, height: 24)
             }
+            .glassButton(prominent: canSave, tint: canSave ? accent : nil, shape: .capsule)
             .disabled(!canSave)
             .accessibilityIdentifier("sendMemo")
             .accessibilityLabel("发送")
         }
-        .buttonStyle(GlassPressStyle())
         .font(.title3)
-        .foregroundStyle(.secondary)
+        .controlSize(.large)
         .padding(.horizontal, 18)
         .padding(.vertical, 10)
     }

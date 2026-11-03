@@ -76,12 +76,11 @@ struct MemoListView: View {
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
-                    .foregroundStyle(.white)
-                    .frame(width: 60, height: 60)
-                    .glassCircle(tint: accent)
-                    .shadow(color: accent.opacity(0.35), radius: 12, y: 5)
+                    .frame(width: 36, height: 36)
             }
-            .buttonStyle(GlassPressStyle())
+            .glassButton(prominent: true, tint: accent)
+            .controlSize(.large)
+            .shadow(color: accent.opacity(0.3), radius: 12, y: 5)
             .accessibilityIdentifier("newMemo")
             .accessibilityLabel("新建笔记")
             .padding(.trailing, 22)

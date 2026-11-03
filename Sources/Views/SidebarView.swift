@@ -36,11 +36,9 @@ struct SidebarView: View {
                     } label: {
                         Image(systemName: "gearshape")
                             .font(.title3)
-                            .foregroundStyle(.secondary)
-                            .frame(width: 42, height: 42)
-                            .glassCircle()
+                            .frame(width: 26, height: 26)
                     }
-                    .buttonStyle(GlassPressStyle())
+                    .glassButton()
                 }
 
                 HStack {

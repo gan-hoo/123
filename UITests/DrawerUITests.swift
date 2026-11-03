@@ -136,19 +136,19 @@ final class DrawerUITests: XCTestCase {
     func testPlusButtonCreatesMemo() {
         let add = app.buttons["newMemo"]
         XCTAssertTrue(add.waitForExistence(timeout: 3))
-        add.tap()
+        add.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
 
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3), "点 ＋ 应打开编辑器")
         editor.tap()
         editor.typeText("自动化测试笔记 ")
 
-        app.buttons["insertTag"].tap()
+        app.buttons["insertTag"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         editor.typeText("测试")
         XCTAssertTrue((editor.value as? String ?? "").contains("#测试"), "点 # 按钮应插入 #")
         snapshot("composer")
 
-        app.buttons["sendMemo"].tap()
+        app.buttons["sendMemo"].coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         XCTAssertFalse(editor.waitForExistence(timeout: 1.5) && editor.isHittable, "发送后编辑器应关闭")
         let created = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "自动化测试笔记")).firstMatch
         XCTAssertTrue(created.waitForExistence(timeout: 3), "新笔记应出现在列表中")

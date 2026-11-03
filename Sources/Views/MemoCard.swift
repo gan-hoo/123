@@ -159,11 +159,9 @@ struct ImagePreview: View {
             } label: {
                 Image(systemName: "xmark")
                     .font(.headline)
-                    .foregroundStyle(.white)
-                    .frame(width: 44, height: 44)
-                    .glassCircle()
+                    .frame(width: 26, height: 26)
             }
-            .buttonStyle(GlassPressStyle())
+            .glassButton()
             .padding()
         }
         .onTapGesture { dismiss() }
