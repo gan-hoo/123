@@ -93,6 +93,7 @@ struct RootView: View {
         )
         .task {
             seedIfNeeded()
+            migrateLegacySampleNames()
             purgeTrash()
         }
     }
@@ -115,7 +116,13 @@ struct RootView: View {
         let count = (try? context.fetchCount(FetchDescriptor<Memo>())) ?? 0
         guard count == 0 else { return }
         let now = Date()
-        let samples = [
+        // UI 测试：写入旧版示例笔记，用来验证改名迁移
+        let legacy = CloudSync.isUITesting && ProcessInfo.processInfo.arguments.contains("-legacySeed")
+        let samples = legacy ? [
+            "不要追求完美，先记下来。灵感转瞬即逝，记录本身就是思考。 #想法",
+            "用标签整理笔记：\n- 一条笔记可以有多个标签\n- 支持多级标签，比如 #闪念/入门\n- 点击卡片里的标签可以快速筛选",
+            "欢迎使用「闪念」👋\n\n这是一个卡片式的速记本，用来捕捉每一个闪现的想法。\n\n#闪念/入门",
+        ] : [
             "不要追求完美，先记下来。灵感转瞬即逝，记录本身就是思考。 #想法",
             "用标签整理笔记：\n- 一条笔记可以有多个标签\n- 支持多级标签，比如 #JinNotes/入门\n- 点击卡片里的标签可以快速筛选",
             "欢迎使用 Jin Notes👋\n\n这是一个卡片式的速记本，用来捕捉每一个闪现的想法。\n\n- 点击右下角的 ＋ 开始记录\n- 左上角菜单里有标签、热力图和每日回顾\n- 卡片右上角 ··· 可以置顶、编辑、分享和删除\n\n#JinNotes/入门",
@@ -127,6 +134,32 @@ struct RootView: View {
     }
 
     /// 清理回收站中超过 30 天的笔记
+    /// 一次性迁移：把旧版自带示例笔记里的「闪念」「拾念」改成 Jin Notes。
+    /// 只处理 App 自带的那两条示例笔记，不改动用户自己写的内容。
+    private func migrateLegacySampleNames() {
+        let key = "didMigrateSampleNamesV1"
+        guard !UserDefaults.standard.bool(forKey: key) || CloudSync.isUITesting else { return }
+        guard let memos = try? context.fetch(FetchDescriptor<Memo>()) else { return }
+        var changed = false
+        for memo in memos {
+            let text = memo.content
+            let isWelcome = text.hasPrefix("欢迎使用「闪念」") || text.hasPrefix("欢迎使用「拾念」")
+            let isTagGuide = text.hasPrefix("用标签整理笔记：")
+            guard isWelcome || isTagGuide else { continue }
+            var new = text
+            for old in ["闪念", "拾念"] {
+                new = new.replacingOccurrences(of: "欢迎使用「\(old)」", with: "欢迎使用 Jin Notes")
+                new = new.replacingOccurrences(of: "#\(old)/入门", with: "#JinNotes/入门")
+            }
+            if new != text {
+                memo.content = new
+                changed = true
+            }
+        }
+        if changed { try? context.save() }
+        UserDefaults.standard.set(true, forKey: key)
+    }
+
     private func purgeTrash() {
         let cutoff = Date().addingTimeInterval(-30 * 24 * 3600)
         let descriptor = FetchDescriptor<Memo>(predicate: #Predicate<Memo> { $0.trashedAt != nil })

@@ -154,4 +154,17 @@ final class DrawerUITests: XCTestCase {
         XCTAssertTrue(created.waitForExistence(timeout: 3), "新笔记应出现在列表中")
         snapshot("memo-created")
     }
+
+    // MARK: - 旧示例笔记改名迁移
+
+    func testLegacySampleNotesRenamed() {
+        app.terminate()
+        app.launchArguments = ["-uiTesting", "-legacySeed"]
+        app.launch()
+        let welcome = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "欢迎使用 Jin Notes")).firstMatch
+        XCTAssertTrue(welcome.waitForExistence(timeout: 5), "旧欢迎笔记应改为 Jin Notes")
+        let legacy = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "闪念")).firstMatch
+        XCTAssertFalse(legacy.exists, "示例笔记中不应再出现「闪念」")
+        snapshot("legacy-migrated")
+    }
 }
