@@ -20,6 +20,16 @@ final class ScreenshotTests: XCTestCase {
         sleep(2)
         shoot(app, "\(appearance)-1-home")
 
+        // 下滑列表后的顶部
+        let win = app.windows.firstMatch
+        win.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.75))
+            .press(forDuration: 0.05, thenDragTo: win.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45)))
+        sleep(1)
+        shoot(app, "\(appearance)-1b-home-scrolled")
+        win.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.35))
+            .press(forDuration: 0.05, thenDragTo: win.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.85)))
+        sleep(1)
+
         // 侧边栏
         let menu = app.buttons["menuButton"]
         if menu.waitForExistence(timeout: 3) {

@@ -62,7 +62,11 @@ struct RootView: View {
                         .onTapGesture { setDrawer(open: false) }
                         .accessibilityIdentifier("drawerScrim")
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 28 * progress, style: .continuous))
+                // 遮罩延伸到状态栏区域，避免导航栏背景在状态栏处被裁掉
+                .mask {
+                    RoundedRectangle(cornerRadius: 28 * progress, style: .continuous)
+                        .ignoresSafeArea()
+                }
                 .shadow(color: .black.opacity(0.18 * progress), radius: 16)
                 .offset(x: shift)
             }

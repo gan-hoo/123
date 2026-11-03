@@ -12,6 +12,13 @@ struct SidebarView: View {
 
     private var tagCounts: [TagCount] { TagParser.tagCounts(from: memos) }
 
+    /// 所有笔记的字数（不计空白字符）
+    private var wordCount: Int {
+        memos.reduce(0) { sum, memo in
+            sum + memo.content.reduce(0) { $1.isWhitespace ? $0 : $0 + 1 }
+        }
+    }
+
     private var usedDays: Int {
         guard let first = memos.first?.createdAt else { return 0 }
         let cal = Calendar.current
@@ -21,7 +28,7 @@ struct SidebarView: View {
 
     var body: some View {
         let tags = tagCounts
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 10) {
                     Image("Logo")
@@ -46,6 +53,8 @@ struct SidebarView: View {
                     stat(tags.filter { $0.depth == 0 }.count, "标签")
                     Spacer()
                     stat(usedDays, "天")
+                    Spacer()
+                    stat(wordCount, "字数")
                 }
                 .padding(.horizontal, 8)
 
@@ -95,9 +104,17 @@ struct SidebarView: View {
         }
     }
 
+    private func formatCount(_ n: Int) -> String {
+        if n >= 10_000 {
+            let w = Double(n) / 10_000
+            return w >= 100 ? "\(Int(w))万" : String(format: "%.1f万", w)
+        }
+        return "\(n)"
+    }
+
     private func stat(_ value: Int, _ label: String) -> some View {
         VStack(spacing: 2) {
-            Text("\(value)")
+            Text(formatCount(value))
                 .font(.title2.weight(.semibold))
                 .monospacedDigit()
             Text(label)
