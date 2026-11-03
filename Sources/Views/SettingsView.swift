@@ -59,7 +59,7 @@ struct SettingsView: View {
                 } label: {
                     LabeledContent("版本", value: version)
                 }
-                Text("拾念：拾起每一个闪现的念头。一个卡片式速记本。")
+                Text("Jin Notes：捕捉每一个闪现的念头。一个卡片式速记本。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }

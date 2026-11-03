@@ -53,14 +53,14 @@ jobs:
         run: |
           mkdir -p Payload
           cp -R build/Build/Products/Release-iphoneos/Shinian.app Payload/
-          zip -qry Shinian.ipa Payload
-          ls -lh Shinian.ipa
+          zip -qry JinNotes.ipa Payload
+          ls -lh JinNotes.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Shinian-ipa
-          path: Shinian.ipa
+          name: JinNotes-ipa
+          path: JinNotes.ipa
 
       - name: Upload build log
         if: always()
@@ -75,19 +75,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 拾念 最新构建
+          name: Jin Notes 最新构建
           prerelease: true
           make_latest: false
           body: |
             自动构建（未签名）。提交：${{ github.sha }}
             使用 AltStore / SideStore / Sideloadly / TrollStore 安装。
-          files: Shinian.ipa
+          files: JinNotes.ipa
 
       - name: Publish release (tag)
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: Shinian.ipa
+          files: JinNotes.ipa
 
   # ---------- 模拟器 UI 自动化测试（侧边栏手势等） ----------
   ui-test:
@@ -293,14 +293,14 @@ jobs:
             -archivePath "$RUNNER_TEMP/Shinian.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export"
-          cp "$RUNNER_TEMP/export/Shinian.ipa" Shinian-iCloud.ipa
-          ls -lh Shinian-iCloud.ipa
+          cp "$RUNNER_TEMP/export/Shinian.ipa" JinNotes-iCloud.ipa
+          ls -lh JinNotes-iCloud.ipa
 
       - name: Upload signed IPA
         uses: actions/upload-artifact@v4
         with:
-          name: Shinian-iCloud-ipa
-          path: Shinian-iCloud.ipa
+          name: JinNotes-iCloud-ipa
+          path: JinNotes-iCloud.ipa
 
       - name: Add to release
         if: github.ref_type == 'branch'
@@ -309,7 +309,7 @@ jobs:
           tag_name: latest
           prerelease: true
           make_latest: false
-          files: Shinian-iCloud.ipa
+          files: JinNotes-iCloud.ipa
 
       - name: Clean up keychain
         if: always()

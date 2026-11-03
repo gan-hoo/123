@@ -1,4 +1,4 @@
-# 生成拾念 App 图标：python3 tools/make_icon.py <输出目录>
+# 生成 Jin Notes App 图标：python3 tools/make_icon.py <输出目录>
 import math, sys
 from PIL import Image, ImageDraw, ImageFilter
 

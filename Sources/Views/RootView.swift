@@ -116,8 +116,8 @@ struct RootView: View {
         let now = Date()
         let samples = [
             "不要追求完美，先记下来。灵感转瞬即逝，记录本身就是思考。 #想法",
-            "用标签整理笔记：\n- 一条笔记可以有多个标签\n- 支持多级标签，比如 #拾念/入门\n- 点击卡片里的标签可以快速筛选",
-            "欢迎使用「拾念」👋\n\n这是一个卡片式的速记本，用来捕捉每一个闪现的想法。\n\n- 点击右下角的 ＋ 开始记录\n- 左上角菜单里有标签、热力图和每日回顾\n- 卡片右上角 ··· 可以置顶、编辑、分享和删除\n\n#拾念/入门",
+            "用标签整理笔记：\n- 一条笔记可以有多个标签\n- 支持多级标签，比如 #JinNotes/入门\n- 点击卡片里的标签可以快速筛选",
+            "欢迎使用 Jin Notes👋\n\n这是一个卡片式的速记本，用来捕捉每一个闪现的想法。\n\n- 点击右下角的 ＋ 开始记录\n- 左上角菜单里有标签、热力图和每日回顾\n- 卡片右上角 ··· 可以置顶、编辑、分享和删除\n\n#JinNotes/入门",
         ]
         for (i, text) in samples.enumerated() {
             context.insert(Memo(content: text, createdAt: now.addingTimeInterval(Double(i - samples.count) * 60)))

@@ -1,6 +1,6 @@
-# 拾念 Shinian
+# Jin Notes
 
-一个卡片式速记 iOS App，交互参考 flomo 与闪念笔记：快速记录、#标签 整理、每日回顾。
+Jin Notes 是一个卡片式速记 iOS App，交互参考 flomo 与闪念笔记：快速记录、#标签 整理、每日回顾。
 
 ## 功能
 
@@ -22,10 +22,10 @@ SwiftUI + SwiftData，iOS 17+，用 [XcodeGen](https://github.com/yonaskolb/Xcod
 
 ## 获取 IPA
 
-每次 push 都会由 GitHub Actions（`.github/workflows/build-ipa.yml`）在 macOS 上编译一个**未签名**的 `Shinian.ipa`：
+每次 push 都会由 GitHub Actions（`.github/workflows/build-ipa.yml`）在 macOS 上编译一个**未签名**的 `JinNotes.ipa`：
 
 - 仓库 **Releases → latest** 下载，或
-- **Actions → Build IPA → 某次运行 → Artifacts → Shinian-ipa** 下载
+- **Actions → Build IPA → 某次运行 → Artifacts → JinNotes-ipa** 下载
 
 未签名的 IPA 需要用 AltStore / SideStore / Sideloadly（用你的 Apple ID 重签）或 TrollStore 安装。
 
@@ -58,7 +58,7 @@ CloudKit 同步需要 App 用**付费 Apple 开发者账号**（$99/年）签名
    | Variable（可选） | `BUNDLE_ID` | 自定义 Bundle ID，默认 `com.ganhoo.shinian` |
    | Variable（可选） | `EXPORT_METHOD` | `development`（默认）/ `ad-hoc` / `app-store` |
 
-3. 推送代码后，Releases → latest 会多出 `Shinian-iCloud.ipa`，用爱思助手 / Apple Configurator / Sideloadly 安装即可。
+3. 推送代码后，Releases → latest 会多出 `JinNotes-iCloud.ipa`，用爱思助手 / Apple Configurator / Sideloadly 安装即可。
 
 > 使用 `ad-hoc` 或 `app-store` 时连接的是 CloudKit **生产环境**，需要先在 [CloudKit Console](https://icloud.developer.apple.com) 把开发环境的 Schema 部署到生产环境（先用 development 版本运行一次生成 Schema）。
 

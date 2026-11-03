@@ -12,6 +12,13 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.7.0", date: "2026-11-03", title: "Jin Notes",
+            items: [
+                "App 更名为 Jin Notes",
+                "已有的笔记和设置全部保留，无需重新导入",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.6.0", date: "2026-11-03", title: "液态玻璃",
             items: [
                 "全面换成苹果 Liquid Glass 液态玻璃风格（iOS 26）：导航栏、搜索栏、按钮、弹窗",

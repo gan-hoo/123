@@ -28,7 +28,7 @@ struct SidebarView: View {
                         .resizable()
                         .frame(width: 36, height: 36)
                         .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    Text("拾念")
+                    Text("Jin Notes")
                         .font(.title2.bold())
                     Spacer()
                     Button {
