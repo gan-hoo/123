@@ -44,8 +44,10 @@ jobs:
             CODE_SIGNING_ALLOWED=NO \
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
-            build | tee xcodebuild.log | grep -E "error:|warning: .*Swift|BUILD (SUCCEEDED|FAILED)" || true
-          test -d build/Build/Products/Release-iphoneos/Shinian.app
+            build | tee xcodebuild.log | grep -E "error:|BUILD (SUCCEEDED|FAILED)" || true
+          # 必须真正编译成功且生成了可执行文件，才允许打包发布
+          grep -q "BUILD SUCCEEDED" xcodebuild.log
+          test -f build/Build/Products/Release-iphoneos/Shinian.app/Shinian
 
       - name: Package IPA
         run: |

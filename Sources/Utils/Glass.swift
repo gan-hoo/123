@@ -47,7 +47,7 @@ extension View {
         #endif
     }
 
-    private func legacyGlass<S: Shape>(_ shape: S, tint: Color?) -> some View {
+    private func legacyGlass<S: InsettableShape>(_ shape: S, tint: Color?) -> some View {
         self
             .background {
                 ZStack {
