@@ -112,4 +112,22 @@ final class DrawerUITests: XCTestCase {
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         XCTAssertTrue(waitDrawer(open: false), "点击右侧主页区域应收起侧边栏")
     }
+
+    // MARK: - 月历
+
+    func testTapTodayInCalendarFiltersByDay() {
+        tapMenuButton()
+        XCTAssertTrue(waitDrawer(open: true))
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "M月d日"
+        let today = f.string(from: Date())
+        let cell = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", today + "，")).firstMatch
+        XCTAssertTrue(cell.waitForExistence(timeout: 3), "月历中应有今天的格子")
+        cell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(waitDrawer(open: false), "点日期后侧边栏应收起")
+        XCTAssertTrue(app.navigationBars[today].waitForExistence(timeout: 3) || app.staticTexts[today].exists,
+                      "主页标题应变为当天日期")
+        snapshot("calendar-day-filter")
+    }
 }
