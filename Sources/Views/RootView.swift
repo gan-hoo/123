@@ -70,6 +70,8 @@ struct RootView: View {
     private func seedIfNeeded() {
         guard !didSeed else { return }
         didSeed = true
+        // 开启 iCloud 同步时不写入示例笔记，避免多台设备重复
+        guard !CloudSync.isActive else { return }
         let count = (try? context.fetchCount(FetchDescriptor<Memo>())) ?? 0
         guard count == 0 else { return }
         let now = Date()

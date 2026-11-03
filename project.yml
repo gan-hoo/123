@@ -15,8 +15,8 @@ targets:
       path: Config/Info.plist
       properties:
         CFBundleDisplayName: 闪念
-        CFBundleShortVersionString: "1.0.0"
-        CFBundleVersion: "1"
+        CFBundleShortVersionString: "1.1.0"
+        CFBundleVersion: "2"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -25,6 +25,16 @@ targets:
           UIApplicationSupportsMultipleScenes: false
         ITSAppUsesNonExemptEncryption: false
         NSPhotoLibraryUsageDescription: 用于在笔记中添加图片
+        UIBackgroundModes:
+          - remote-notification
+    entitlements:
+      path: Config/FlashMemo.entitlements
+      properties:
+        com.apple.developer.icloud-container-identifiers:
+          - iCloud.com.ganhoo.flashmemo
+        com.apple.developer.icloud-services:
+          - CloudKit
+        aps-environment: development
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.ganhoo.flashmemo
@@ -33,6 +43,6 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        MARKETING_VERSION: "1.0.0"
-        CURRENT_PROJECT_VERSION: "1"
+        MARKETING_VERSION: "1.1.0"
+        CURRENT_PROJECT_VERSION: "2"
         ENABLE_PREVIEWS: YES
