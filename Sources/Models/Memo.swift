@@ -48,12 +48,15 @@ enum MemoFilter: Hashable {
     case all
     case pinned
     case tag(String)
+    /// 某一天的笔记（取当天 00:00）
+    case day(Date)
 
     var title: String {
         switch self {
         case .all: return "全部笔记"
         case .pinned: return "置顶"
         case .tag(let t): return "#" + t
+        case .day(let d): return Fmt.dayTitle.string(from: d)
         }
     }
 
@@ -62,6 +65,7 @@ enum MemoFilter: Hashable {
         case .all: return true
         case .pinned: return memo.isPinned
         case .tag(let t): return memo.has(tag: t)
+        case .day(let d): return Calendar.current.isDate(memo.createdAt, inSameDayAs: d)
         }
     }
 }

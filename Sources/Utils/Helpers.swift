@@ -9,6 +9,20 @@ enum Fmt {
         return f
     }()
 
+    static let dayTitle: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "M月d日"
+        return f
+    }()
+
+    static let monthTitle: DateFormatter = {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy年M月"
+        return f
+    }()
+
     static let fileDate: DateFormatter = {
         let f = DateFormatter()
         f.dateFormat = "yyyyMMdd-HHmm"

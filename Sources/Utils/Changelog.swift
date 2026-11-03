@@ -12,6 +12,14 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.5.0", date: "2026-11-03", title: "月历热力图",
+            items: [
+                "侧边栏热力图改为按月显示的月历，每格显示日期，颜色深浅代表当天笔记数量",
+                "可用左右箭头切换月份，「今天」按钮快速回到本月，并显示本月笔记数",
+                "点击有笔记的日期，即可查看当天的所有笔记",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.4.1", date: "2026-11-03", title: "侧边栏手感重做",
             items: [
                 "侧边栏改为类似 Claude App 的效果：整个主页跟随手指右移，侧边栏从左侧露出",

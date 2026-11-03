@@ -49,7 +49,14 @@ struct SidebarView: View {
                 }
                 .padding(.horizontal, 8)
 
-                HeatmapView(dates: memos.map(\.createdAt))
+                MonthHeatmapView(
+                    dates: memos.map(\.createdAt),
+                    selectedDay: {
+                        if case .day(let d) = filter { return d }
+                        return nil
+                    }(),
+                    onSelectDay: { day in onSelectFilter(.day(day)) }
+                )
 
                 VStack(spacing: 2) {
                     navRow("全部笔记", icon: "square.grid.2x2", selected: filter == .all) {
@@ -146,43 +153,76 @@ struct SidebarView: View {
     }
 }
 
-struct HeatmapView: View {
+/// 月历热力图：每个格子是一天，颜色深浅表示当天笔记数量
+struct MonthHeatmapView: View {
     @Environment(\.accent) private var accent
-    let dates: [Date]
-    var weeks = 14
 
-    private struct Cell: Hashable {
-        let date: Date
+    let dates: [Date]
+    var selectedDay: Date?
+    var onSelectDay: (Date) -> Void
+
+    @State private var month: Date = Calendar.current.dateInterval(of: .month, for: Date())?.start ?? Date()
+
+    private var calendar: Calendar { Calendar.current }
+
+    private struct Cell: Identifiable {
+        let id: Int
+        let date: Date?
         let count: Int
+        let isToday: Bool
         let isFuture: Bool
     }
 
-    private func grid() -> [[Cell]] {
-        let cal = Calendar.current
-        var counts: [Date: Int] = [:]
+    private var counts: [Date: Int] {
+        var result: [Date: Int] = [:]
         for d in dates {
-            counts[cal.startOfDay(for: d), default: 0] += 1
+            result[calendar.startOfDay(for: d), default: 0] += 1
         }
-        let today = cal.startOfDay(for: Date())
-        let weekday = cal.component(.weekday, from: today) // 1 = 周日
-        let thisWeekStart = cal.date(byAdding: .day, value: -(weekday - 1), to: today) ?? today
-        let start = cal.date(byAdding: .day, value: -7 * (weeks - 1), to: thisWeekStart) ?? today
-        var columns: [[Cell]] = []
-        for w in 0..<weeks {
-            var col: [Cell] = []
-            for d in 0..<7 {
-                let day = cal.date(byAdding: .day, value: w * 7 + d, to: start) ?? today
-                col.append(Cell(date: day, count: counts[day] ?? 0, isFuture: day > today))
-            }
-            columns.append(col)
-        }
-        return columns
+        return result
     }
 
-    private func color(for cell: Cell) -> Color {
-        if cell.isFuture { return .clear }
-        switch cell.count {
-        case 0: return Color.gray.opacity(0.15)
+    private var weekdaySymbols: [String] {
+        let symbols = ["日", "一", "二", "三", "四", "五", "六"]
+        let first = calendar.firstWeekday - 1
+        return Array(symbols[first...] + symbols[..<first])
+    }
+
+    private func cells() -> [Cell] {
+        let counts = self.counts
+        let today = calendar.startOfDay(for: Date())
+        guard let range = calendar.range(of: .day, in: .month, for: month) else { return [] }
+        let firstWeekday = calendar.component(.weekday, from: month)
+        let leading = (firstWeekday - calendar.firstWeekday + 7) % 7
+        var result: [Cell] = []
+        for i in 0..<leading {
+            result.append(Cell(id: -1 - i, date: nil, count: 0, isToday: false, isFuture: false))
+        }
+        for day in range {
+            let date = calendar.date(byAdding: .day, value: day - 1, to: month) ?? month
+            result.append(Cell(id: day, date: date, count: counts[date] ?? 0,
+                               isToday: date == today, isFuture: date > today))
+        }
+        return result
+    }
+
+    private var monthTotal: Int {
+        guard let interval = calendar.dateInterval(of: .month, for: month) else { return 0 }
+        return dates.filter { interval.contains($0) }.count
+    }
+
+    private var isCurrentMonth: Bool {
+        calendar.isDate(month, equalTo: Date(), toGranularity: .month)
+    }
+
+    private func shiftMonth(_ delta: Int) {
+        if let m = calendar.date(byAdding: .month, value: delta, to: month) {
+            withAnimation(.easeInOut(duration: 0.2)) { month = m }
+        }
+    }
+
+    private func fill(_ count: Int) -> Color {
+        switch count {
+        case 0: return Color.gray.opacity(0.13)
         case 1: return accent.opacity(0.35)
         case 2...3: return accent.opacity(0.65)
         default: return accent
@@ -190,26 +230,56 @@ struct HeatmapView: View {
     }
 
     var body: some View {
-        let columns = grid()
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 3) {
-                ForEach(columns.indices, id: \.self) { w in
-                    VStack(spacing: 3) {
-                        ForEach(columns[w], id: \.self) { cell in
-                            RoundedRectangle(cornerRadius: 3, style: .continuous)
-                                .fill(color(for: cell))
-                                .frame(width: 15, height: 15)
+        let columns = Array(repeating: GridItem(.flexible(), spacing: 5), count: 7)
+        VStack(spacing: 10) {
+            HStack(spacing: 4) {
+                Button { shiftMonth(-1) } label: {
+                    Image(systemName: "chevron.left")
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
+                }
+                Text(Fmt.monthTitle.string(from: month))
+                    .font(.subheadline.weight(.semibold))
+                    .monospacedDigit()
+                Button { shiftMonth(1) } label: {
+                    Image(systemName: "chevron.right")
+                        .frame(width: 30, height: 30)
+                        .contentShape(Rectangle())
+                }
+                .disabled(isCurrentMonth)
+                Spacer()
+                Text("本月 \(monthTotal) 条")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                if !isCurrentMonth {
+                    Button("今天") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            month = calendar.dateInterval(of: .month, for: Date())?.start ?? Date()
                         }
                     }
+                    .font(.caption)
                 }
             }
+            .buttonStyle(.plain)
+            .foregroundStyle(.primary)
+
+            LazyVGrid(columns: columns, spacing: 5) {
+                ForEach(weekdaySymbols, id: \.self) { w in
+                    Text(w)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                }
+                ForEach(cells()) { cell in
+                    dayCell(cell)
+                }
+            }
+
             HStack(spacing: 4) {
-                Text("最近 \(weeks) 周")
                 Spacer()
                 Text("少")
                 ForEach([0, 1, 2, 4], id: \.self) { n in
                     RoundedRectangle(cornerRadius: 2)
-                        .fill(color(for: Cell(date: Date(), count: n, isFuture: false)))
+                        .fill(fill(n))
                         .frame(width: 9, height: 9)
                 }
                 Text("多")
@@ -217,6 +287,42 @@ struct HeatmapView: View {
             .font(.caption2)
             .foregroundStyle(.secondary)
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
+    private func numberColor(_ cell: Cell) -> Color {
+        if cell.count >= 2 { return .white }
+        if cell.isFuture { return Color.secondary.opacity(0.5) }
+        return .secondary
+    }
+
+    @ViewBuilder
+    private func dayCell(_ cell: Cell) -> some View {
+        if let date = cell.date {
+            let selected = selectedDay.map { calendar.isDate($0, inSameDayAs: date) } ?? false
+            Button {
+                if cell.count > 0 { onSelectDay(date) }
+            } label: {
+                RoundedRectangle(cornerRadius: 6, style: .continuous)
+                    .fill(cell.isFuture ? Color.clear : fill(cell.count))
+                    .aspectRatio(1, contentMode: .fit)
+                    .overlay {
+                        Text("\(calendar.component(.day, from: date))")
+                            .font(.system(size: 11, weight: cell.isToday ? .bold : .regular))
+                            .monospacedDigit()
+                            .foregroundStyle(numberColor(cell))
+                    }
+                    .overlay {
+                        if cell.isToday || selected {
+                            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                                .strokeBorder(accent, lineWidth: selected ? 2 : 1.5)
+                        }
+                    }
+            }
+            .buttonStyle(.plain)
+            .disabled(cell.count == 0)
+            .accessibilityLabel("\(Fmt.dayTitle.string(from: date))，\(cell.count) 条笔记")
+        } else {
+            Color.clear.aspectRatio(1, contentMode: .fit)
+        }
     }
 }
