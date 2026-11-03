@@ -3,6 +3,7 @@ import SwiftData
 import UIKit
 
 struct MemoCard: View {
+    @Environment(\.accent) private var accent
     let memo: Memo
     var alwaysExpanded = false
     var onEdit: () -> Void
@@ -20,7 +21,7 @@ struct MemoCard: View {
             header
 
             if !memo.content.isEmpty {
-                Text(TagParser.attributed(memo.content))
+                Text(TagParser.attributed(memo.content, accent: accent))
                     .font(.body)
                     .lineSpacing(4)
                     .lineLimit(alwaysExpanded || expanded ? nil : 10)
@@ -66,7 +67,7 @@ struct MemoCard: View {
             if memo.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
-                    .foregroundStyle(Theme.accent)
+                    .foregroundStyle(accent)
             }
             Spacer()
             Menu {

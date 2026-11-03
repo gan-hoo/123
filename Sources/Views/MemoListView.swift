@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct MemoListView: View {
+    @Environment(\.accent) private var accent
     @Binding var filter: MemoFilter
     var onMenu: () -> Void
 
@@ -77,8 +78,8 @@ struct MemoListView: View {
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
                     .frame(width: 58, height: 58)
-                    .background(Theme.accent, in: Circle())
-                    .shadow(color: Theme.accent.opacity(0.4), radius: 10, y: 4)
+                    .background(accent, in: Circle())
+                    .shadow(color: accent.opacity(0.4), radius: 10, y: 4)
             }
             .padding(.trailing, 22)
             .padding(.bottom, 28)
@@ -101,12 +102,16 @@ struct MemoListView: View {
             }
         }
         .sheet(isPresented: $showComposer) {
-            ComposerView(memo: nil, presetTag: presetTag)
-                .presentationDetents([.medium, .large])
+            ThemedRoot {
+                ComposerView(memo: nil, presetTag: presetTag)
+            }
+            .presentationDetents([.medium, .large])
         }
         .sheet(item: $editing) { memo in
-            ComposerView(memo: memo, presetTag: nil)
-                .presentationDetents([.large])
+            ThemedRoot {
+                ComposerView(memo: memo, presetTag: nil)
+            }
+            .presentationDetents([.large])
         }
     }
 }

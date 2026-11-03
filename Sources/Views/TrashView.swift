@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct TrashView: View {
+    @Environment(\.accent) private var accent
     @Environment(\.modelContext) private var context
     @Query(filter: #Predicate<Memo> { $0.trashedAt != nil },
            sort: \Memo.createdAt, order: .reverse)
@@ -33,7 +34,7 @@ struct TrashView: View {
                         } label: {
                             Label("恢复", systemImage: "arrow.uturn.backward")
                         }
-                        .tint(Theme.accent)
+                        .tint(accent)
                     }
                     .contextMenu {
                         Button {

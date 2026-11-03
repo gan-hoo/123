@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct SidebarView: View {
+    @Environment(\.accent) private var accent
     let filter: MemoFilter
     var onSelectFilter: (MemoFilter) -> Void
     var onRoute: (Route) -> Void
@@ -26,8 +27,8 @@ struct SidebarView: View {
                     Image(systemName: "bolt.fill")
                         .foregroundStyle(.white)
                         .frame(width: 34, height: 34)
-                        .background(Theme.accent, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
-                    Text("闪念")
+                        .background(accent, in: RoundedRectangle(cornerRadius: 9, style: .continuous))
+                    Text("拾念")
                         .font(.title2.bold())
                     Spacer()
                     Button {
@@ -107,10 +108,10 @@ struct SidebarView: View {
                 Spacer()
             }
             .font(.body)
-            .foregroundStyle(selected ? Theme.accent : Color.primary)
+            .foregroundStyle(selected ? accent : Color.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(selected ? Theme.accent.opacity(0.12) : Color.clear,
+            .background(selected ? accent.opacity(0.12) : Color.clear,
                         in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .contentShape(Rectangle())
         }
@@ -125,7 +126,7 @@ struct SidebarView: View {
             HStack(spacing: 8) {
                 Image(systemName: "number")
                     .font(.footnote)
-                    .foregroundStyle(selected ? Theme.accent : Color.secondary)
+                    .foregroundStyle(selected ? accent : Color.secondary)
                 Text(tag.leaf)
                     .lineLimit(1)
                 Spacer()
@@ -133,11 +134,11 @@ struct SidebarView: View {
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
-            .foregroundStyle(selected ? Theme.accent : Color.primary)
+            .foregroundStyle(selected ? accent : Color.primary)
             .padding(.leading, 12 + CGFloat(tag.depth) * 16)
             .padding(.trailing, 12)
             .padding(.vertical, 8)
-            .background(selected ? Theme.accent.opacity(0.12) : Color.clear,
+            .background(selected ? accent.opacity(0.12) : Color.clear,
                         in: RoundedRectangle(cornerRadius: 8, style: .continuous))
             .contentShape(Rectangle())
         }
@@ -146,6 +147,7 @@ struct SidebarView: View {
 }
 
 struct HeatmapView: View {
+    @Environment(\.accent) private var accent
     let dates: [Date]
     var weeks = 14
 
@@ -181,9 +183,9 @@ struct HeatmapView: View {
         if cell.isFuture { return .clear }
         switch cell.count {
         case 0: return Color.gray.opacity(0.15)
-        case 1: return Theme.accent.opacity(0.35)
-        case 2...3: return Theme.accent.opacity(0.65)
-        default: return Theme.accent
+        case 1: return accent.opacity(0.35)
+        case 2...3: return accent.opacity(0.65)
+        default: return accent
         }
     }
 

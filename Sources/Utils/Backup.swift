@@ -12,7 +12,7 @@ struct BackupMemo: Codable {
 }
 
 struct BackupFile: Codable {
-    var app = "FlashMemo"
+    var app = "Shinian"
     var version = 1
     var exportedAt = Date()
     var memos: [BackupMemo]
@@ -41,7 +41,7 @@ struct BackupDocument: FileDocument {
 
 enum Backup {
     static var defaultFilename: String {
-        "闪念备份-\(Fmt.fileDate.string(from: Date()))"
+        "拾念备份-\(Fmt.fileDate.string(from: Date()))"
     }
 
     static func makeDocument(_ memos: [Memo]) throws -> BackupDocument {

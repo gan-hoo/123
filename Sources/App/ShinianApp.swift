@@ -2,7 +2,7 @@ import SwiftUI
 import SwiftData
 
 @main
-struct FlashMemoApp: App {
+struct ShinianApp: App {
     private let container: ModelContainer
 
     init() {
@@ -12,8 +12,9 @@ struct FlashMemoApp: App {
 
     var body: some Scene {
         WindowGroup {
-            RootView()
-                .tint(Theme.accent)
+            ThemedRoot {
+                RootView()
+            }
         }
         .modelContainer(container)
     }

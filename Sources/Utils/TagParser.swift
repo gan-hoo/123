@@ -9,7 +9,7 @@ struct TagCount: Identifiable, Hashable {
 }
 
 enum TagParser {
-    static let tagScheme = "flashmemo-tag"
+    static let tagScheme = "shinian-tag"
 
     /// `#标签` 前面必须是开头或空白；支持多级标签 `#读书/小说`
     static let regex: NSRegularExpression = {
@@ -61,7 +61,7 @@ enum TagParser {
     }
 
     /// 生成带标签高亮（并可点击）的富文本
-    static func attributed(_ text: String) -> AttributedString {
+    static func attributed(_ text: String, accent: Color) -> AttributedString {
         let ns = text as NSString
         var result = AttributedString()
         var last = 0
@@ -73,8 +73,8 @@ enum TagParser {
             let full = ns.substring(with: m.range)
             let name = ns.substring(with: m.range(at: 1)).trimmingCharacters(in: CharacterSet(charactersIn: "/"))
             var piece = AttributedString(full)
-            piece.foregroundColor = Theme.accent
-            piece.backgroundColor = Theme.accent.opacity(0.12)
+            piece.foregroundColor = accent
+            piece.backgroundColor = accent.opacity(0.12)
             var comps = URLComponents()
             comps.scheme = tagScheme
             comps.host = "tag"

@@ -1,10 +1,6 @@
 import SwiftUI
 import UIKit
 
-enum Theme {
-    static let accent = Color(red: 0.188, green: 0.780, blue: 0.470)
-}
-
 enum Fmt {
     static let full: DateFormatter = {
         let f = DateFormatter()
@@ -57,7 +53,7 @@ enum Haptics {
 
 enum Exporter {
     static func markdown(_ memos: [Memo]) -> String {
-        var out = "# 闪念笔记导出\n\n导出时间：\(Fmt.full.string(from: Date()))\n共 \(memos.count) 条\n\n"
+        var out = "# 拾念笔记导出\n\n导出时间：\(Fmt.full.string(from: Date()))\n共 \(memos.count) 条\n\n"
         for memo in memos.sorted(by: { $0.createdAt > $1.createdAt }) {
             out += "## \(Fmt.full.string(from: memo.createdAt))\n\n"
             out += memo.content
@@ -69,7 +65,7 @@ enum Exporter {
     }
 
     static func writeMarkdown(_ memos: [Memo]) -> URL? {
-        let name = "闪念导出-\(Fmt.fileDate.string(from: Date())).md"
+        let name = "拾念导出-\(Fmt.fileDate.string(from: Date())).md"
         let url = FileManager.default.temporaryDirectory.appendingPathComponent(name)
         do {
             try markdown(memos).write(to: url, atomically: true, encoding: .utf8)

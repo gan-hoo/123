@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct ReviewView: View {
+    @Environment(\.accent) private var accent
     @Query(filter: #Predicate<Memo> { $0.trashedAt == nil })
     private var memos: [Memo]
 
@@ -32,7 +33,7 @@ struct ReviewView: View {
                             VStack(alignment: .leading, spacing: 10) {
                                 Text(Fmt.relative(memo.createdAt))
                                     .font(.headline)
-                                    .foregroundStyle(Theme.accent)
+                                    .foregroundStyle(accent)
                                 MemoCard(memo: memo, alwaysExpanded: true, onEdit: { editing = memo })
                             }
                             .padding(.horizontal, 20)
@@ -63,7 +64,9 @@ struct ReviewView: View {
             if picks.isEmpty { shuffle() }
         }
         .sheet(item: $editing) { memo in
-            ComposerView(memo: memo, presetTag: nil)
+            ThemedRoot {
+                ComposerView(memo: memo, presetTag: nil)
+            }
         }
     }
 

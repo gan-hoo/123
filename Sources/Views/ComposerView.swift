@@ -3,6 +3,7 @@ import SwiftData
 import PhotosUI
 
 struct ComposerView: View {
+    @Environment(\.accent) private var accent
     let memo: Memo?
     var presetTag: String?
 
@@ -61,7 +62,7 @@ struct ComposerView: View {
                                     .font(.subheadline)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
-                                    .background(Theme.accent.opacity(0.12), in: Capsule())
+                                    .background(accent.opacity(0.12), in: Capsule())
                             }
                         }
                         .padding(.horizontal, 16)
@@ -166,7 +167,7 @@ struct ComposerView: View {
                     .font(.body)
                     .foregroundStyle(.white)
                     .frame(width: 54, height: 34)
-                    .background(canSave ? Theme.accent : Color.gray.opacity(0.35), in: Capsule())
+                    .background(canSave ? accent : Color.gray.opacity(0.35), in: Capsule())
             }
             .disabled(!canSave)
         }

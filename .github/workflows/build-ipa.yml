@@ -30,8 +30,8 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild \
-            -project FlashMemo.xcodeproj \
-            -scheme FlashMemo \
+            -project Shinian.xcodeproj \
+            -scheme Shinian \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
@@ -40,20 +40,20 @@ jobs:
             CODE_SIGNING_REQUIRED=NO \
             CODE_SIGN_IDENTITY="" \
             build | tee xcodebuild.log | grep -E "error:|warning: .*Swift|BUILD (SUCCEEDED|FAILED)" || true
-          test -d build/Build/Products/Release-iphoneos/FlashMemo.app
+          test -d build/Build/Products/Release-iphoneos/Shinian.app
 
       - name: Package IPA
         run: |
           mkdir -p Payload
-          cp -R build/Build/Products/Release-iphoneos/FlashMemo.app Payload/
-          zip -qry FlashMemo.ipa Payload
-          ls -lh FlashMemo.ipa
+          cp -R build/Build/Products/Release-iphoneos/Shinian.app Payload/
+          zip -qry Shinian.ipa Payload
+          ls -lh Shinian.ipa
 
       - name: Upload IPA artifact
         uses: actions/upload-artifact@v4
         with:
-          name: FlashMemo-ipa
-          path: FlashMemo.ipa
+          name: Shinian-ipa
+          path: Shinian.ipa
 
       - name: Upload build log
         if: always()
@@ -68,19 +68,19 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: latest
-          name: 闪念 最新构建
+          name: 拾念 最新构建
           prerelease: true
           make_latest: false
           body: |
             自动构建（未签名）。提交：${{ github.sha }}
             使用 AltStore / SideStore / Sideloadly / TrollStore 安装。
-          files: FlashMemo.ipa
+          files: Shinian.ipa
 
       - name: Publish release (tag)
         if: github.ref_type == 'tag'
         uses: softprops/action-gh-release@v2
         with:
-          files: FlashMemo.ipa
+          files: Shinian.ipa
 
   # ---------- 带 iCloud 权限的签名构建（需配置 secrets，否则跳过） ----------
   check-signing:
@@ -110,7 +110,7 @@ jobs:
       P12_PASSWORD: ${{ secrets.P12_PASSWORD }}
       BUILD_PROVISION_PROFILE_BASE64: ${{ secrets.BUILD_PROVISION_PROFILE_BASE64 }}
       TEAM_ID: ${{ secrets.TEAM_ID }}
-      BUNDLE_ID: ${{ vars.BUNDLE_ID || 'com.ganhoo.flashmemo' }}
+      BUNDLE_ID: ${{ vars.BUNDLE_ID || 'com.ganhoo.shinian' }}
       EXPORT_METHOD: ${{ vars.EXPORT_METHOD || 'development' }}
     steps:
       - uses: actions/checkout@v4
@@ -152,7 +152,7 @@ jobs:
       - name: Generate Xcode project
         run: |
           brew install xcodegen
-          sed -i '' "s/com\.ganhoo\.flashmemo/$BUNDLE_ID/g" project.yml
+          sed -i '' "s/com\.ganhoo\.shinian/$BUNDLE_ID/g" project.yml
           if [ "$EXPORT_METHOD" != "development" ]; then
             sed -i '' 's/aps-environment: development/aps-environment: production/' project.yml
           fi
@@ -162,12 +162,12 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild \
-            -project FlashMemo.xcodeproj \
-            -scheme FlashMemo \
+            -project Shinian.xcodeproj \
+            -scheme Shinian \
             -configuration Release \
             -sdk iphoneos \
             -destination 'generic/platform=iOS' \
-            -archivePath "$RUNNER_TEMP/FlashMemo.xcarchive" \
+            -archivePath "$RUNNER_TEMP/Shinian.xcarchive" \
             CODE_SIGN_STYLE=Manual \
             DEVELOPMENT_TEAM="$TEAM_ID" \
             CODE_SIGN_IDENTITY="$SIGN_IDENTITY" \
@@ -195,17 +195,17 @@ jobs:
           </plist>
           PLIST
           xcodebuild -exportArchive \
-            -archivePath "$RUNNER_TEMP/FlashMemo.xcarchive" \
+            -archivePath "$RUNNER_TEMP/Shinian.xcarchive" \
             -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
             -exportPath "$RUNNER_TEMP/export"
-          cp "$RUNNER_TEMP/export/FlashMemo.ipa" FlashMemo-iCloud.ipa
-          ls -lh FlashMemo-iCloud.ipa
+          cp "$RUNNER_TEMP/export/Shinian.ipa" Shinian-iCloud.ipa
+          ls -lh Shinian-iCloud.ipa
 
       - name: Upload signed IPA
         uses: actions/upload-artifact@v4
         with:
-          name: FlashMemo-iCloud-ipa
-          path: FlashMemo-iCloud.ipa
+          name: Shinian-iCloud-ipa
+          path: Shinian-iCloud.ipa
 
       - name: Add to release
         if: github.ref_type == 'branch'
@@ -214,7 +214,7 @@ jobs:
           tag_name: latest
           prerelease: true
           make_latest: false
-          files: FlashMemo-iCloud.ipa
+          files: Shinian-iCloud.ipa
 
       - name: Clean up keychain
         if: always()

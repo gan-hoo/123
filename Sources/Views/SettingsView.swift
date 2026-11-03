@@ -2,6 +2,7 @@ import SwiftUI
 import SwiftData
 
 struct SettingsView: View {
+    @Environment(\.accent) private var accent
     @Environment(\.modelContext) private var context
 
     @Query(filter: #Predicate<Memo> { $0.trashedAt == nil })
@@ -10,6 +11,8 @@ struct SettingsView: View {
     @Query private var everyMemo: [Memo]
 
     @AppStorage(CloudSync.prefKey) private var iCloudSync = true
+    @AppStorage(Theme.colorKey) private var colorRaw = ThemeColor.mint.rawValue
+    @AppStorage(Theme.appearanceKey) private var appearanceRaw = Appearance.system.rawValue
     @ObservedObject private var sync = SyncMonitor.shared
 
     @State private var exportURL: URL?
@@ -26,6 +29,7 @@ struct SettingsView: View {
 
     var body: some View {
         Form {
+            appearanceSection
             syncSection
             backupSection
 
@@ -51,7 +55,7 @@ struct SettingsView: View {
 
             Section("关于") {
                 LabeledContent("版本", value: version)
-                Text("闪念：一个卡片式速记本，记录每一个闪现的想法。")
+                Text("拾念：拾起每一个闪现的念头。一个卡片式速记本。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -65,6 +69,55 @@ struct SettingsView: View {
             Button("好", role: .cancel) {}
         } message: {
             Text(message ?? "")
+        }
+    }
+
+    // MARK: - 外观
+
+    private var appearanceSection: some View {
+        Section("外观") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack {
+                    Text("主题色")
+                    Spacer()
+                    Text((ThemeColor(rawValue: colorRaw) ?? .mint).name)
+                        .foregroundStyle(.secondary)
+                }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 10), count: 5), spacing: 14) {
+                    ForEach(ThemeColor.allCases) { theme in
+                        Button {
+                            Haptics.light()
+                            withAnimation(.easeInOut(duration: 0.2)) { colorRaw = theme.rawValue }
+                        } label: {
+                            ZStack {
+                                Circle()
+                                    .fill(theme.color)
+                                    .frame(width: 38, height: 38)
+                                if colorRaw == theme.rawValue {
+                                    Circle()
+                                        .strokeBorder(theme.color, lineWidth: 2.5)
+                                        .frame(width: 48, height: 48)
+                                    Image(systemName: "checkmark")
+                                        .font(.footnote.weight(.bold))
+                                        .foregroundStyle(.white)
+                                }
+                            }
+                            .frame(width: 50, height: 50)
+                            .contentShape(Circle())
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(theme.name)
+                    }
+                }
+            }
+            .padding(.vertical, 6)
+
+            Picker("显示模式", selection: $appearanceRaw) {
+                ForEach(Appearance.allCases) { a in
+                    Text(a.name).tag(a.rawValue)
+                }
+            }
+            .pickerStyle(.segmented)
         }
     }
 
@@ -113,16 +166,16 @@ struct SettingsView: View {
             return SyncStatus(icon: "person.crop.circle.badge.exclamationmark", color: .orange, text: "未登录 iCloud，登录后会自动同步")
         }
         if sync.inProgress {
-            return SyncStatus(icon: "arrow.triangle.2.circlepath.icloud", color: Theme.accent, text: "正在同步…")
+            return SyncStatus(icon: "arrow.triangle.2.circlepath.icloud", color: accent, text: "正在同步…")
         }
         if let err = sync.lastError {
             return SyncStatus(icon: "xmark.icloud", color: .red, text: "同步出错：\(err)")
         }
         if let d = sync.lastSync {
-            return SyncStatus(icon: "checkmark.icloud", color: Theme.accent,
+            return SyncStatus(icon: "checkmark.icloud", color: accent,
                               text: "已同步 · \(d.formatted(date: .omitted, time: .shortened))")
         }
-        return SyncStatus(icon: "checkmark.icloud", color: Theme.accent, text: "已开启")
+        return SyncStatus(icon: "checkmark.icloud", color: accent, text: "已开启")
     }
 
     private var syncFooter: String {
@@ -187,7 +240,7 @@ struct SettingsView: View {
         Label {
             Text(text).font(.subheadline)
         } icon: {
-            Image(systemName: icon).foregroundStyle(Theme.accent)
+            Image(systemName: icon).foregroundStyle(accent)
         }
     }
 }
