@@ -82,6 +82,8 @@ struct MemoListView: View {
                     .shadow(color: accent.opacity(0.35), radius: 12, y: 5)
             }
             .buttonStyle(.plain)
+            .accessibilityIdentifier("newMemo")
+            .accessibilityLabel("新建笔记")
             .padding(.trailing, 22)
             .padding(.bottom, 28)
         }
