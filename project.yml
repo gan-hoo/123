@@ -15,8 +15,8 @@ targets:
       path: Config/Info.plist
       properties:
         CFBundleDisplayName: 拾念
-        CFBundleShortVersionString: "1.3.1"
-        CFBundleVersion: "7"
+        CFBundleShortVersionString: "1.4.0"
+        CFBundleVersion: "8"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -43,6 +43,6 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        MARKETING_VERSION: "1.3.1"
-        CURRENT_PROJECT_VERSION: "7"
+        MARKETING_VERSION: "1.4.0"
+        CURRENT_PROJECT_VERSION: "8"
         ENABLE_PREVIEWS: YES

@@ -12,8 +12,8 @@ struct RootView: View {
     @AppStorage("didSeed") private var didSeed = false
 
     private let drawerWidth: CGFloat = 300
-    /// 从屏幕左侧多宽的区域内开始右滑可以打开侧边栏
-    private let edgeWidth: CGFloat = 40
+    /// 左侧边缘区域：在这里开始的右滑判定更宽松
+    private let edgeWidth: CGFloat = 60
 
     /// 0 = 完全关闭，1 = 完全打开
     private var progress: CGFloat {
@@ -70,11 +70,13 @@ struct RootView: View {
                 },
                 onEnded: { tx, vx in
                     isDragging = false
-                    let projected = tx + vx * 0.2
                     if drawerOpen {
-                        setDrawer(open: !(tx < -drawerWidth * 0.3 || projected < -drawerWidth * 0.6))
+                        // 拖过 30% 或快速左滑即收起
+                        setDrawer(open: !(tx < -drawerWidth * 0.3 || vx < -300))
                     } else {
-                        setDrawer(open: tx > drawerWidth * 0.35 || projected > drawerWidth * 0.8)
+                        // 拉出 20% 或轻快右滑即打开；明显往回拉则取消
+                        let shouldOpen = vx > -150 && (tx > drawerWidth * 0.2 || vx > 300)
+                        setDrawer(open: shouldOpen)
                     }
                 }
             )

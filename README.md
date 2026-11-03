@@ -71,3 +71,9 @@ open Shinian.xcodeproj
 ```
 
 在 Xcode 的 Signing & Capabilities 里选择你的 Team，即可真机运行。
+
+## 发版约定
+
+每次更新：
+1. `project.yml` 中提升 `MARKETING_VERSION` / `CFBundleShortVersionString` 和 `CURRENT_PROJECT_VERSION` / `CFBundleVersion`
+2. 在 `Sources/Utils/Changelog.swift` 最前面加一条更新内容（App 内 设置 → 关于 → 版本 可查看）

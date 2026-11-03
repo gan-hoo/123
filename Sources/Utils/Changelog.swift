@@ -1,0 +1,78 @@
+import Foundation
+
+struct ChangelogEntry: Identifiable {
+    let version: String
+    let date: String
+    let title: String
+    let items: [String]
+    var id: String { version }
+}
+
+/// 更新日志：每次发版在最前面加一条（版本号需与 project.yml 中的 MARKETING_VERSION 一致）
+enum Changelog {
+    static let entries: [ChangelogEntry] = [
+        ChangelogEntry(
+            version: "1.4.0", date: "2026-11-03", title: "更顺手的侧边栏",
+            items: [
+                "主页任意位置向右滑都能拉出侧边栏，不再局限于屏幕边缘",
+                "拉出约 1/5 或轻快一划即可打开，手感更灵敏",
+                "新增「更新日志」：在 设置 → 关于 → 版本 中查看每次更新的内容",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.3.1", date: "2026-11-03", title: "手势修复",
+            items: [
+                "拖动侧边栏时，背后的笔记列表不再跟着上下滚动",
+                "收起侧边栏时，侧边栏内的标签列表也不会再跟着滚动",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.3.0", date: "2026-11-03", title: "全新图标",
+            items: [
+                "全新 App 图标：记事卡片 + 灵感星芒，寓意「拾起每一个闪现的念头」",
+                "新增深色模式图标（iOS 18 深色主屏自动切换）",
+                "侧边栏顶部使用新 Logo",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.2.2", date: "2026-11-03", title: "侧边栏手势",
+            items: [
+                "从屏幕左边缘向右滑可拉出侧边栏，侧边栏跟随手指移动",
+                "侧边栏打开时向左滑可收起",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.2.1", date: "2026-11-03", title: "标签高亮",
+            items: [
+                "编辑笔记时 #标签 实时以主题色高亮显示",
+                "兼容拼音、九宫格等中文输入法，组字过程中不会被打断",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.2.0", date: "2026-11-03", title: "拾念 · 换个新名字",
+            items: [
+                "App 更名为「拾念」",
+                "新增 9 种主题色：薄荷绿、海盐蓝、靛青、薰衣草、樱花粉、珊瑚橙、琥珀黄、松针绿、石墨灰",
+                "显示模式可选：跟随系统 / 浅色 / 深色",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.1.0", date: "2026-11-03", title: "iCloud",
+            items: [
+                "支持 iCloud（CloudKit）自动同步笔记和图片（需带 iCloud 权限的签名包）",
+                "新增备份到 iCloud 云盘 / 从备份恢复，恢复时自动跳过重复笔记",
+                "设置页显示 iCloud 同步状态",
+            ]
+        ),
+        ChangelogEntry(
+            version: "1.0.0", date: "2026-11-03", title: "首个版本",
+            items: [
+                "卡片式笔记时间线，支持置顶、编辑、复制、分享、删除",
+                "#标签 与多级标签，输入 # 时自动联想",
+                "全文搜索、记录热力图、每日回顾",
+                "笔记可添加最多 9 张图片",
+                "回收站（30 天自动清除）与 Markdown 导出",
+            ]
+        ),
+    ]
+}

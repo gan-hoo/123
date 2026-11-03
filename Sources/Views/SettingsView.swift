@@ -54,7 +54,11 @@ struct SettingsView: View {
             }
 
             Section("关于") {
-                LabeledContent("版本", value: version)
+                NavigationLink {
+                    ChangelogView()
+                } label: {
+                    LabeledContent("版本", value: version)
+                }
                 Text("拾念：拾起每一个闪现的念头。一个卡片式速记本。")
                     .font(.footnote)
                     .foregroundStyle(.secondary)

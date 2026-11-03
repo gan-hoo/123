@@ -94,15 +94,17 @@ struct DrawerPanGesture: UIViewRepresentable {
             let dx = t.x != 0 ? t.x : v.x
             let dy = t.y != 0 ? t.y : v.y
 
-            // 必须以水平方向为主
-            guard abs(dx) > abs(dy) * 1.2 else { return false }
+            let startX = pan.location(in: view).x - t.x
+            let nearEdge = !parent.isOpen && startX <= parent.edgeWidth
+            // 以水平方向为主，垂直滑动交给列表滚动；左边缘附近更宽松
+            guard abs(dx) > abs(dy) * (nearEdge ? 0.7 : 1.0) else { return false }
 
             if parent.isOpen {
                 return dx < 0
             }
             guard parent.canOpen, dx > 0 else { return false }
-            let startX = pan.location(in: view).x - t.x
-            return startX <= parent.edgeWidth
+            // 主页任意位置向右滑都可以拉出侧边栏
+            return true
         }
 
         /// 让滚动视图等待本手势判定失败后再开始，避免两者同时响应
