@@ -8,10 +8,9 @@ struct RootView: View {
     @State private var drawerOpen = false
     /// 手指拖动的水平位移
     @State private var dragX: CGFloat = 0
-    @State private var isDragging = false
+    @State private var drawerWidth: CGFloat = 320
     @AppStorage("didSeed") private var didSeed = false
 
-    private let drawerWidth: CGFloat = 300
     /// 左侧边缘区域：在这里开始的右滑判定更宽松
     private let edgeWidth: CGFloat = 60
 
@@ -22,60 +21,71 @@ struct RootView: View {
     }
 
     var body: some View {
-        ZStack(alignment: .leading) {
-            NavigationStack(path: $path) {
-                MemoListView(filter: $filter, onMenu: { setDrawer(open: true) })
-                    .navigationDestination(for: Route.self) { route in
-                        switch route {
-                        case .review: ReviewView()
-                        case .trash: TrashView()
-                        case .settings: SettingsView()
-                        }
+        GeometryReader { geo in
+            let shift = progress * drawerWidth
+            ZStack(alignment: .leading) {
+                // 侧边栏：和主页一起移动，从左侧露出（类似 Claude App）
+                SidebarView(
+                    filter: filter,
+                    onSelectFilter: { f in
+                        filter = f
+                        path = []
+                        setDrawer(open: false)
+                    },
+                    onRoute: { r in
+                        setDrawer(open: false)
+                        path = [r]
                     }
-            }
+                )
+                .frame(width: drawerWidth)
+                .frame(maxHeight: .infinity)
+                .background(Color(.systemGroupedBackground).ignoresSafeArea())
+                .offset(x: shift - drawerWidth)
+                .accessibilityHidden(progress == 0)
 
-            Color.black
-                .opacity(0.35 * progress)
-                .ignoresSafeArea()
-                .allowsHitTesting(progress > 0.01)
-                .onTapGesture { setDrawer(open: false) }
-
-            SidebarView(
-                filter: filter,
-                onSelectFilter: { f in
-                    filter = f
-                    path = []
-                    setDrawer(open: false)
-                },
-                onRoute: { r in
-                    setDrawer(open: false)
-                    path = [r]
+                // 主页：整体跟随手指向右移动
+                NavigationStack(path: $path) {
+                    MemoListView(filter: $filter, onMenu: { setDrawer(open: true) })
+                        .navigationDestination(for: Route.self) { route in
+                            switch route {
+                            case .review: ReviewView()
+                            case .trash: TrashView()
+                            case .settings: SettingsView()
+                            }
+                        }
                 }
-            )
-            .frame(width: drawerWidth)
-            .frame(maxHeight: .infinity)
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
-            .shadow(color: .black.opacity(0.15 * progress), radius: 12, x: 4)
-            .offset(x: (progress - 1) * drawerWidth)
-            .accessibilityHidden(progress == 0)
+                .overlay {
+                    Color.black
+                        .opacity(0.25 * progress)
+                        .ignoresSafeArea()
+                        .allowsHitTesting(progress > 0.01)
+                        .onTapGesture { setDrawer(open: false) }
+                        .accessibilityIdentifier("drawerScrim")
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 28 * progress, style: .continuous))
+                .shadow(color: .black.opacity(0.18 * progress), radius: 16)
+                .offset(x: shift)
+            }
+            .onAppear { drawerWidth = min(geo.size.width * 0.82, 340) }
+            .onChange(of: geo.size.width) { _, w in drawerWidth = min(w * 0.82, 340) }
         }
+        .background(Color(.systemGroupedBackground).ignoresSafeArea())
         .background(
             DrawerPanGesture(
                 isOpen: drawerOpen,
                 canOpen: path.isEmpty,
                 edgeWidth: edgeWidth,
                 onChanged: { tx in
-                    isDragging = true
                     dragX = drawerOpen ? min(0, tx) : max(0, tx)
                 },
                 onEnded: { tx, vx in
-                    isDragging = false
                     if drawerOpen {
-                        // 拖过 30% 或快速左滑即收起
-                        setDrawer(open: !(tx < -drawerWidth * 0.3 || vx < -300))
+                        // 拖过 25% 或快速左滑即收起；明显往右甩则保持打开
+                        let shouldClose = vx < 200 && (tx < -drawerWidth * 0.25 || vx < -250)
+                        setDrawer(open: !shouldClose)
                     } else {
-                        // 拉出 20% 或轻快右滑即打开；明显往回拉则取消
-                        let shouldOpen = vx > -150 && (tx > drawerWidth * 0.2 || vx > 300)
+                        // 拉出 25% 或轻快右滑即打开；明显往回拉则取消
+                        let shouldOpen = vx > -200 && (tx > drawerWidth * 0.25 || vx > 250)
                         setDrawer(open: shouldOpen)
                     }
                 }
@@ -98,7 +108,7 @@ struct RootView: View {
     }
 
     private func seedIfNeeded() {
-        guard !didSeed else { return }
+        guard !didSeed || CloudSync.isUITesting else { return }
         didSeed = true
         // 开启 iCloud 同步时不写入示例笔记，避免多台设备重复
         guard !CloudSync.isActive else { return }

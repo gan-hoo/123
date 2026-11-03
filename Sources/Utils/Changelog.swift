@@ -12,6 +12,15 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.4.1", date: "2026-11-03", title: "侧边栏手感重做",
+            items: [
+                "侧边栏改为类似 Claude App 的效果：整个主页跟随手指右移，侧边栏从左侧露出",
+                "右滑判定更宽松：以手指移动速度的方向判断，稍微斜着划也能拉出",
+                "拉出 1/4 或轻快一划即可打开，往回拉可取消",
+                "侧边栏更宽，点击右侧露出的主页即可收起",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.4.0", date: "2026-11-03", title: "更顺手的侧边栏",
             items: [
                 "主页任意位置向右滑都能拉出侧边栏，不再局限于屏幕边缘",

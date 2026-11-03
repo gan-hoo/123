@@ -15,8 +15,8 @@ targets:
       path: Config/Info.plist
       properties:
         CFBundleDisplayName: 拾念
-        CFBundleShortVersionString: "1.4.0"
-        CFBundleVersion: "8"
+        CFBundleShortVersionString: "1.4.1"
+        CFBundleVersion: "9"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -43,6 +43,29 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        MARKETING_VERSION: "1.4.0"
-        CURRENT_PROJECT_VERSION: "8"
+        MARKETING_VERSION: "1.4.1"
+        CURRENT_PROJECT_VERSION: "9"
         ENABLE_PREVIEWS: YES
+  ShinianUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - path: UITests
+    dependencies:
+      - target: Shinian
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
+        PRODUCT_BUNDLE_IDENTIFIER: com.ganhoo.shinian.uitests
+        TEST_TARGET_NAME: Shinian
+        SWIFT_VERSION: "5.0"
+        TARGETED_DEVICE_FAMILY: "1"
+schemes:
+  Shinian:
+    build:
+      targets:
+        Shinian: all
+    test:
+      config: Debug
+      targets:
+        - ShinianUITests

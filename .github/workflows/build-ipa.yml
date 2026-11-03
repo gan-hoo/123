@@ -82,6 +82,56 @@ jobs:
         with:
           files: Shinian.ipa
 
+  # ---------- 模拟器 UI 自动化测试（侧边栏手势等） ----------
+  ui-test:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          sudo xcode-select -s /Applications/Xcode_16.4.app || sudo xcode-select -s "$(ls -d /Applications/Xcode_16*.app | sort -V | tail -1)"
+
+      - name: Generate Xcode project
+        run: |
+          brew install xcodegen
+          xcodegen generate
+
+      - name: Run UI tests
+        run: |
+          set -o pipefail
+          UDID=$(xcrun simctl list devices available -j | python3 -c "
+          import json,sys
+          d=json.load(sys.stdin)['devices']
+          for rt in sorted(d, reverse=True):
+              if 'iOS' not in rt: continue
+              for dev in d[rt]:
+                  if dev['name'].startswith('iPhone 16') and 'Plus' not in dev['name'] and 'Pro' not in dev['name']:
+                      print(dev['udid']); sys.exit()
+          for rt in sorted(d, reverse=True):
+              for dev in d[rt]:
+                  if 'iOS' in rt and dev['name'].startswith('iPhone'):
+                      print(dev['udid']); sys.exit()
+          ")
+          echo "Simulator: $UDID"
+          xcodebuild test \
+            -project Shinian.xcodeproj \
+            -scheme Shinian \
+            -destination "id=$UDID" \
+            -resultBundlePath TestResults.xcresult \
+            CODE_SIGNING_ALLOWED=NO \
+            | tee test.log | grep -E "Test Case .*(passed|failed)|error:|XCTAssert|\*\* TEST"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ui-test-results
+          path: |
+            TestResults.xcresult
+            test.log
+          if-no-files-found: ignore
+
   # ---------- 带 iCloud 权限的签名构建（需配置 secrets，否则跳过） ----------
   check-signing:
     runs-on: ubuntu-latest

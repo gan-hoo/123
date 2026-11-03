@@ -39,8 +39,18 @@ enum CloudSync {
         FileManager.default.ubiquityIdentityToken != nil
     }
 
+    /// UI 自动化测试模式：使用内存数据库
+    static var isUITesting: Bool {
+        ProcessInfo.processInfo.arguments.contains("-uiTesting")
+    }
+
     static func makeContainer() -> ModelContainer {
         let schema = Schema([Memo.self, MemoImage.self])
+        if isUITesting {
+            let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
+            // swiftlint:disable:next force_try
+            return try! ModelContainer(for: schema, configurations: config)
+        }
         enabledAtLaunch = enabledInSettings
         if enabledAtLaunch && hasCloudKitEntitlement {
             let config = ModelConfiguration(schema: schema, cloudKitDatabase: .automatic)

@@ -1,0 +1,108 @@
+import XCTest
+
+/// 侧边栏手势的自动化测试：在模拟器上模拟真实手指拖动
+final class DrawerUITests: XCTestCase {
+    private var app: XCUIApplication!
+
+    override func setUpWithError() throws {
+        continueAfterFailure = false
+        app = XCUIApplication()
+        app.launchArguments = ["-uiTesting"]
+        app.launch()
+        XCTAssertTrue(waitDrawer(open: false), "启动时侧边栏应为关闭")
+    }
+
+    // MARK: - Helpers
+
+    /// 侧边栏中的「全部标签」标题：侧边栏关闭时对辅助功能隐藏
+    private var sidebarMarker: XCUIElement { app.staticTexts["全部标签"] }
+
+    private func isDrawerOpen() -> Bool {
+        sidebarMarker.exists && sidebarMarker.isHittable
+    }
+
+    private func waitDrawer(open: Bool, timeout: TimeInterval = 3) -> Bool {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            if isDrawerOpen() == open { return true }
+            RunLoop.current.run(until: Date().addingTimeInterval(0.1))
+        }
+        return isDrawerOpen() == open
+    }
+
+    private func drag(_ from: CGVector, _ to: CGVector, velocity: XCUIGestureVelocity) {
+        let window = app.windows.firstMatch
+        let start = window.coordinate(withNormalizedOffset: from)
+        let end = window.coordinate(withNormalizedOffset: to)
+        start.press(forDuration: 0.05, thenDragTo: end, withVelocity: velocity, thenHoldForDuration: 0)
+    }
+
+    private func snapshot(_ name: String) {
+        let shot = XCTAttachment(screenshot: app.screenshot())
+        shot.name = name
+        shot.lifetime = .keepAlways
+        add(shot)
+    }
+
+    // MARK: - 打开
+
+    func testSlowDragFromMiddleOpens() {
+        drag(CGVector(dx: 0.3, dy: 0.6), CGVector(dx: 0.75, dy: 0.6), velocity: .slow)
+        XCTAssertTrue(waitDrawer(open: true), "从屏幕中间慢慢向右拖应打开侧边栏")
+        snapshot("slow-drag-open")
+    }
+
+    func testQuickShortFlickOpens() {
+        drag(CGVector(dx: 0.4, dy: 0.5), CGVector(dx: 0.62, dy: 0.5), velocity: .fast)
+        XCTAssertTrue(waitDrawer(open: true), "轻快短促的右划应打开侧边栏")
+    }
+
+    func testDiagonalSwipeOpens() {
+        drag(CGVector(dx: 0.2, dy: 0.45), CGVector(dx: 0.75, dy: 0.55), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: true), "略微斜向的右滑应打开侧边栏")
+    }
+
+    func testEdgeSwipeOpens() {
+        drag(CGVector(dx: 0.02, dy: 0.5), CGVector(dx: 0.6, dy: 0.5), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: true), "从左边缘右滑应打开侧边栏")
+    }
+
+    func testSwipeOnCardOpens() {
+        // 从第一张卡片上开始滑
+        drag(CGVector(dx: 0.25, dy: 0.3), CGVector(dx: 0.8, dy: 0.32), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: true), "在卡片上右滑也应打开侧边栏")
+    }
+
+    func testMenuButtonOpens() {
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(waitDrawer(open: true), "点击菜单按钮应打开侧边栏")
+    }
+
+    // MARK: - 不应打开
+
+    func testVerticalScrollDoesNotOpen() {
+        drag(CGVector(dx: 0.5, dy: 0.75), CGVector(dx: 0.55, dy: 0.3), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: false, timeout: 1.5), "上下滑动不应打开侧边栏")
+    }
+
+    func testLeftSwipeDoesNotOpen() {
+        drag(CGVector(dx: 0.8, dy: 0.5), CGVector(dx: 0.2, dy: 0.5), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: false, timeout: 1.5), "向左滑不应打开侧边栏")
+    }
+
+    // MARK: - 关闭
+
+    func testSwipeLeftCloses() {
+        drag(CGVector(dx: 0.3, dy: 0.6), CGVector(dx: 0.8, dy: 0.6), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: true))
+        drag(CGVector(dx: 0.7, dy: 0.5), CGVector(dx: 0.15, dy: 0.5), velocity: .default)
+        XCTAssertTrue(waitDrawer(open: false), "向左滑应收起侧边栏")
+    }
+
+    func testTapContentCloses() {
+        app.navigationBars.buttons.firstMatch.tap()
+        XCTAssertTrue(waitDrawer(open: true))
+        app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
+        XCTAssertTrue(waitDrawer(open: false), "点击右侧主页区域应收起侧边栏")
+    }
+}

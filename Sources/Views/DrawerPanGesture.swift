@@ -91,13 +91,14 @@ struct DrawerPanGesture: UIViewRepresentable {
 
             let t = pan.translation(in: view)
             let v = pan.velocity(in: view)
-            let dx = t.x != 0 ? t.x : v.x
-            let dy = t.y != 0 ? t.y : v.y
+            // 以速度方向为主判断（比开始时几像素的位移更可靠）
+            let dx = abs(v.x) + abs(v.y) > 1 ? v.x : t.x
+            let dy = abs(v.x) + abs(v.y) > 1 ? v.y : t.y
 
             let startX = pan.location(in: view).x - t.x
             let nearEdge = !parent.isOpen && startX <= parent.edgeWidth
-            // 以水平方向为主，垂直滑动交给列表滚动；左边缘附近更宽松
-            guard abs(dx) > abs(dy) * (nearEdge ? 0.7 : 1.0) else { return false }
+            // 水平分量占优即可（约 45°），左边缘附近更宽松（约 55°）
+            guard abs(dx) > abs(dy) * (nearEdge ? 0.7 : 0.95) else { return false }
 
             if parent.isOpen {
                 return dx < 0
