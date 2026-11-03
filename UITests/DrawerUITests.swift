@@ -130,4 +130,28 @@ final class DrawerUITests: XCTestCase {
                       "主页标题应变为当天日期")
         snapshot("calendar-day-filter")
     }
+
+    // MARK: - 新建笔记
+
+    func testPlusButtonCreatesMemo() {
+        let add = app.buttons["newMemo"]
+        XCTAssertTrue(add.waitForExistence(timeout: 3))
+        add.tap()
+
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3), "点 ＋ 应打开编辑器")
+        editor.tap()
+        editor.typeText("自动化测试笔记 ")
+
+        app.buttons["insertTag"].tap()
+        editor.typeText("测试")
+        XCTAssertTrue((editor.value as? String ?? "").contains("#测试"), "点 # 按钮应插入 #")
+        snapshot("composer")
+
+        app.buttons["sendMemo"].tap()
+        XCTAssertFalse(editor.waitForExistence(timeout: 1.5) && editor.isHittable, "发送后编辑器应关闭")
+        let created = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "自动化测试笔记")).firstMatch
+        XCTAssertTrue(created.waitForExistence(timeout: 3), "新笔记应出现在列表中")
+        snapshot("memo-created")
+    }
 }

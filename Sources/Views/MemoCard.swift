@@ -163,7 +163,7 @@ struct ImagePreview: View {
                     .frame(width: 44, height: 44)
                     .glassCircle()
             }
-            .buttonStyle(.plain)
+            .buttonStyle(GlassPressStyle())
             .padding()
         }
         .onTapGesture { dismiss() }

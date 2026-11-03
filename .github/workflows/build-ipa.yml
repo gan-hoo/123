@@ -148,9 +148,9 @@ jobs:
           for test in manifest:
               for att in test.get('attachments', []):
                   name = att.get('suggestedHumanReadableName') or att['exportedFileName']
-                  name = name.split('_0_')[0].replace(' ', '-')
-                  if not name.endswith('.png'):
-                      name += '.png'
+                  if '_0_' not in name or not name.endswith('.png') or name.startswith(('UI Snapshot', 'App UI')):
+                      continue
+                  name = name.split('_0_')[0].replace(' ', '-') + '.png'
                   shutil.copy(os.path.join('raw', att['exportedFileName']), os.path.join('shots', name))
           print(sorted(os.listdir('shots')))
           PY

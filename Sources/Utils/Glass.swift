@@ -21,7 +21,7 @@ extension View {
 
     /// 玻璃胶囊（标签、小按钮）
     @ViewBuilder
-    func glassCapsule(tint: Color? = nil, interactive: Bool = true) -> some View {
+    func glassCapsule(tint: Color? = nil, interactive: Bool = false) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             self.glassEffect(.regular.tint(tint).interactive(interactive), in: Capsule())
@@ -35,7 +35,7 @@ extension View {
 
     /// 玻璃圆形
     @ViewBuilder
-    func glassCircle(tint: Color? = nil, interactive: Bool = true) -> some View {
+    func glassCircle(tint: Color? = nil, interactive: Bool = false) -> some View {
         #if compiler(>=6.2)
         if #available(iOS 26.0, *) {
             self.glassEffect(.regular.tint(tint).interactive(interactive), in: Circle())
@@ -71,6 +71,17 @@ extension View {
         #else
         self
         #endif
+    }
+}
+
+/// 玻璃按钮的按压反馈。
+/// 注意：按钮内的玻璃不能设为 interactive，否则 iOS 26 上玻璃会吞掉点击，按钮不触发。
+struct GlassPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.92 : 1)
+            .brightness(configuration.isPressed ? 0.06 : 0)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: configuration.isPressed)
     }
 }
 

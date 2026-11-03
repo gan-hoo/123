@@ -149,6 +149,7 @@ struct ComposerView: View {
                         .frame(width: 44, height: 44)
                         .glassCircle()
                 }
+                .accessibilityIdentifier("insertTag")
                 PhotosPicker(selection: $pickerItems,
                              maxSelectionCount: max(1, maxImages - images.count),
                              matching: .images) {
@@ -162,6 +163,7 @@ struct ComposerView: View {
                         .frame(width: 44, height: 44)
                         .glassCircle()
                 }
+                .accessibilityIdentifier("insertList")
             }
             .glassGroup(spacing: 10)
             Spacer()
@@ -173,8 +175,10 @@ struct ComposerView: View {
                     .glassCapsule(tint: canSave ? accent : nil)
             }
             .disabled(!canSave)
+            .accessibilityIdentifier("sendMemo")
+            .accessibilityLabel("发送")
         }
-        .buttonStyle(.plain)
+        .buttonStyle(GlassPressStyle())
         .font(.title3)
         .foregroundStyle(.secondary)
         .padding(.horizontal, 18)

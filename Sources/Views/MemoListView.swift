@@ -81,7 +81,7 @@ struct MemoListView: View {
                     .glassCircle(tint: accent)
                     .shadow(color: accent.opacity(0.35), radius: 12, y: 5)
             }
-            .buttonStyle(.plain)
+            .buttonStyle(GlassPressStyle())
             .accessibilityIdentifier("newMemo")
             .accessibilityLabel("新建笔记")
             .padding(.trailing, 22)

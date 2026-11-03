@@ -40,7 +40,7 @@ struct SidebarView: View {
                             .frame(width: 42, height: 42)
                             .glassCircle()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(GlassPressStyle())
                 }
 
                 HStack {

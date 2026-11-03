@@ -34,8 +34,11 @@ final class ScreenshotTests: XCTestCase {
         let add = app.buttons["newMemo"]
         if add.waitForExistence(timeout: 3) {
             add.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
-            sleep(2)
-            app.typeText("今天读到一句话 #读书")
+            let editor = app.textViews.firstMatch
+            if editor.waitForExistence(timeout: 3) {
+                editor.tap()
+                editor.typeText("今天读到一句话 #读书")
+            }
             sleep(1)
             shoot(app, "\(appearance)-3-composer")
         }
