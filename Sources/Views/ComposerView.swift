@@ -17,7 +17,7 @@ struct ComposerView: View {
     @State private var images: [Data] = []
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var loaded = false
-    @FocusState private var focused: Bool
+    @State private var focusRequest = false
 
     private let maxImages = 9
 
@@ -98,18 +98,13 @@ struct ComposerView: View {
 
     private var editor: some View {
         ZStack(alignment: .topLeading) {
-            TextEditor(text: $text)
-                .focused($focused)
-                .scrollContentBackground(.hidden)
-                .font(.body)
-                .lineSpacing(4)
-                .padding(.horizontal, 12)
-                .padding(.top, 4)
+            TagTextEditor(text: $text, focusRequest: $focusRequest, accent: accent)
             if text.isEmpty {
                 Text("现在的想法是…")
+                    .font(.body)
                     .foregroundStyle(.tertiary)
-                    .padding(.horizontal, 17)
-                    .padding(.top, 12)
+                    .padding(.leading, TagTextEditor.insets.left)
+                    .padding(.top, TagTextEditor.insets.top)
                     .allowsHitTesting(false)
             }
         }
@@ -189,7 +184,7 @@ struct ComposerView: View {
             text = "#\(presetTag) "
         }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            focused = true
+            focusRequest = true
         }
     }
 
