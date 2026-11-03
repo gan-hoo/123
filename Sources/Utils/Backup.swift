@@ -12,7 +12,7 @@ struct BackupMemo: Codable {
 }
 
 struct BackupFile: Codable {
-    var app = 
+    var app = "JinNotes"
     var version = 1
     var exportedAt = Date()
     var memos: [BackupMemo]
