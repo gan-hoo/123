@@ -12,6 +12,16 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.6.0", date: "2026-11-03", title: "液态玻璃",
+            items: [
+                "全面换成苹果 Liquid Glass 液态玻璃风格（iOS 26）：导航栏、搜索栏、按钮、弹窗",
+                "笔记卡片、侧边栏面板、月历、标签列表改为玻璃材质",
+                "新增随主题色变化的柔和光斑背景，玻璃效果更通透",
+                "编辑器工具栏、发送按钮、新建按钮改为玻璃按钮",
+                "iOS 17/18 上自动使用毛玻璃效果",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.5.0", date: "2026-11-03", title: "月历热力图",
             items: [
                 "侧边栏热力图改为按月显示的月历，每格显示日期，颜色深浅代表当天笔记数量",

@@ -57,7 +57,7 @@ struct MemoListView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 110)
             }
-            .background(Color(.systemGroupedBackground))
+            .background(AppBackground())
             .overlay {
                 if items.isEmpty {
                     if search.isEmpty {
@@ -77,10 +77,11 @@ struct MemoListView: View {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
-                    .frame(width: 58, height: 58)
-                    .background(accent, in: Circle())
-                    .shadow(color: accent.opacity(0.4), radius: 10, y: 4)
+                    .frame(width: 60, height: 60)
+                    .glassCircle(tint: accent)
+                    .shadow(color: accent.opacity(0.35), radius: 12, y: 5)
             }
+            .buttonStyle(.plain)
             .padding(.trailing, 22)
             .padding(.bottom, 28)
         }

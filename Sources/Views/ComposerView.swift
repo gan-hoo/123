@@ -62,7 +62,7 @@ struct ComposerView: View {
                                     .font(.subheadline)
                                     .padding(.horizontal, 10)
                                     .padding(.vertical, 5)
-                                    .background(accent.opacity(0.12), in: Capsule())
+                                    .glassCapsule(tint: accent.opacity(0.25))
                             }
                         }
                         .padding(.horizontal, 16)
@@ -70,7 +70,6 @@ struct ComposerView: View {
                     }
                 }
 
-                Divider()
                 toolbarRow
             }
             .navigationTitle(memo == nil ? "新建笔记" : "编辑笔记")
@@ -143,29 +142,39 @@ struct ComposerView: View {
     }
 
     private var toolbarRow: some View {
-        HStack(spacing: 22) {
-            Button { insertTag() } label: {
-                Image(systemName: "number")
+        HStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Button { insertTag() } label: {
+                    Image(systemName: "number")
+                        .frame(width: 44, height: 44)
+                        .glassCircle()
+                }
+                PhotosPicker(selection: $pickerItems,
+                             maxSelectionCount: max(1, maxImages - images.count),
+                             matching: .images) {
+                    Image(systemName: "photo")
+                        .frame(width: 44, height: 44)
+                        .glassCircle()
+                }
+                .disabled(images.count >= maxImages)
+                Button { insertList() } label: {
+                    Image(systemName: "list.bullet")
+                        .frame(width: 44, height: 44)
+                        .glassCircle()
+                }
             }
-            PhotosPicker(selection: $pickerItems,
-                         maxSelectionCount: max(1, maxImages - images.count),
-                         matching: .images) {
-                Image(systemName: "photo")
-            }
-            .disabled(images.count >= maxImages)
-            Button { insertList() } label: {
-                Image(systemName: "list.bullet")
-            }
+            .glassGroup(spacing: 10)
             Spacer()
             Button(action: save) {
                 Image(systemName: "paperplane.fill")
-                    .font(.body)
-                    .foregroundStyle(.white)
-                    .frame(width: 54, height: 34)
-                    .background(canSave ? accent : Color.gray.opacity(0.35), in: Capsule())
+                    .font(.body.weight(.semibold))
+                    .foregroundStyle(canSave ? Color.white : Color.secondary)
+                    .frame(width: 64, height: 44)
+                    .glassCapsule(tint: canSave ? accent : nil)
             }
             .disabled(!canSave)
         }
+        .buttonStyle(.plain)
         .font(.title3)
         .foregroundStyle(.secondary)
         .padding(.horizontal, 18)

@@ -37,7 +37,10 @@ struct SidebarView: View {
                         Image(systemName: "gearshape")
                             .font(.title3)
                             .foregroundStyle(.secondary)
+                            .frame(width: 42, height: 42)
+                            .glassCircle()
                     }
+                    .buttonStyle(.plain)
                 }
 
                 HStack {
@@ -47,7 +50,9 @@ struct SidebarView: View {
                     Spacer()
                     stat(usedDays, "天")
                 }
-                .padding(.horizontal, 8)
+                .padding(.horizontal, 22)
+                .padding(.vertical, 14)
+                .glassCard()
 
                 MonthHeatmapView(
                     dates: memos.map(\.createdAt),
@@ -57,6 +62,8 @@ struct SidebarView: View {
                     }(),
                     onSelectDay: { day in onSelectFilter(.day(day)) }
                 )
+                .padding(12)
+                .glassCard()
 
                 VStack(spacing: 2) {
                     navRow("全部笔记", icon: "square.grid.2x2", selected: filter == .all) {
@@ -72,6 +79,8 @@ struct SidebarView: View {
                         onRoute(.trash)
                     }
                 }
+                .padding(6)
+                .glassCard()
 
                 VStack(alignment: .leading, spacing: 2) {
                     Text("全部标签")
@@ -89,6 +98,9 @@ struct SidebarView: View {
                         tagRow(tag)
                     }
                 }
+                .padding(.vertical, 12)
+                .padding(.horizontal, 6)
+                .glassCard()
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 20)
@@ -118,8 +130,12 @@ struct SidebarView: View {
             .foregroundStyle(selected ? accent : Color.primary)
             .padding(.horizontal, 12)
             .padding(.vertical, 10)
-            .background(selected ? accent.opacity(0.12) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background {
+                if selected {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(accent.opacity(0.18))
+                }
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
@@ -145,8 +161,12 @@ struct SidebarView: View {
             .padding(.leading, 12 + CGFloat(tag.depth) * 16)
             .padding(.trailing, 12)
             .padding(.vertical, 8)
-            .background(selected ? accent.opacity(0.12) : Color.clear,
-                        in: RoundedRectangle(cornerRadius: 8, style: .continuous))
+            .background {
+                if selected {
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(accent.opacity(0.18))
+                }
+            }
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
