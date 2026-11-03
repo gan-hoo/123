@@ -5,13 +5,26 @@ struct RootView: View {
     @Environment(\.modelContext) private var context
     @State private var filter: MemoFilter = .all
     @State private var path: [Route] = []
-    @State private var showDrawer = false
+    @State private var drawerOpen = false
+    /// 手指拖动的水平位移
+    @State private var dragX: CGFloat = 0
+    @State private var isDragging = false
     @AppStorage("didSeed") private var didSeed = false
+
+    private let drawerWidth: CGFloat = 300
+    /// 从屏幕左侧多宽的区域内开始右滑可以打开侧边栏
+    private let edgeWidth: CGFloat = 40
+
+    /// 0 = 完全关闭，1 = 完全打开
+    private var progress: CGFloat {
+        let base: CGFloat = drawerOpen ? drawerWidth : 0
+        return min(max((base + dragX) / drawerWidth, 0), 1)
+    }
 
     var body: some View {
         ZStack(alignment: .leading) {
             NavigationStack(path: $path) {
-                MemoListView(filter: $filter, onMenu: openDrawer)
+                MemoListView(filter: $filter, onMenu: { setDrawer(open: true) })
                     .navigationDestination(for: Route.self) { route in
                         switch route {
                         case .review: ReviewView()
@@ -20,38 +33,34 @@ struct RootView: View {
                         }
                     }
             }
-            .zIndex(0)
+            .simultaneousGesture(openGesture, including: drawerOpen || !path.isEmpty ? .subviews : .all)
 
-            if showDrawer {
-                Color.black.opacity(0.35)
-                    .ignoresSafeArea()
-                    .onTapGesture(perform: closeDrawer)
-                    .transition(.opacity)
-                    .zIndex(1)
+            Color.black
+                .opacity(0.35 * progress)
+                .ignoresSafeArea()
+                .allowsHitTesting(progress > 0.01)
+                .onTapGesture { setDrawer(open: false) }
+                .gesture(closeGesture)
 
-                SidebarView(
-                    filter: filter,
-                    onSelectFilter: { f in
-                        filter = f
-                        path = []
-                        closeDrawer()
-                    },
-                    onRoute: { r in
-                        closeDrawer()
-                        path = [r]
-                    }
-                )
-                .frame(width: 300)
-                .frame(maxHeight: .infinity)
-                .background(Color(.systemGroupedBackground).ignoresSafeArea())
-                .gesture(
-                    DragGesture().onEnded { v in
-                        if v.translation.width < -60 { closeDrawer() }
-                    }
-                )
-                .transition(.move(edge: .leading))
-                .zIndex(2)
-            }
+            SidebarView(
+                filter: filter,
+                onSelectFilter: { f in
+                    filter = f
+                    path = []
+                    setDrawer(open: false)
+                },
+                onRoute: { r in
+                    setDrawer(open: false)
+                    path = [r]
+                }
+            )
+            .frame(width: drawerWidth)
+            .frame(maxHeight: .infinity)
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .shadow(color: .black.opacity(0.15 * progress), radius: 12, x: 4)
+            .offset(x: (progress - 1) * drawerWidth)
+            .simultaneousGesture(closeGesture)
+            .accessibilityHidden(progress == 0)
         }
         .task {
             seedIfNeeded()
@@ -59,12 +68,57 @@ struct RootView: View {
         }
     }
 
-    private func openDrawer() {
-        withAnimation(.easeOut(duration: 0.25)) { showDrawer = true }
+    // MARK: - 侧边栏手势
+
+    /// 在主页左侧边缘向右滑：侧边栏跟随手指拉出
+    private var openGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .onChanged { v in
+                guard !drawerOpen, path.isEmpty else { return }
+                if !isDragging {
+                    let dx = v.translation.width
+                    let dy = v.translation.height
+                    // 只接受从左边缘开始、以水平向右为主的滑动
+                    guard v.startLocation.x <= edgeWidth, dx > 0, abs(dx) > abs(dy) else { return }
+                    isDragging = true
+                }
+                dragX = max(0, v.translation.width)
+            }
+            .onEnded { v in
+                guard isDragging else { return }
+                isDragging = false
+                let shouldOpen = v.translation.width > drawerWidth * 0.35
+                    || v.predictedEndTranslation.width > drawerWidth * 0.8
+                setDrawer(open: shouldOpen)
+            }
     }
 
-    private func closeDrawer() {
-        withAnimation(.easeOut(duration: 0.25)) { showDrawer = false }
+    /// 侧边栏打开时向左滑：跟随手指收回
+    private var closeGesture: some Gesture {
+        DragGesture(minimumDistance: 12, coordinateSpace: .global)
+            .onChanged { v in
+                guard drawerOpen else { return }
+                if !isDragging {
+                    guard abs(v.translation.width) > abs(v.translation.height) else { return }
+                    isDragging = true
+                }
+                dragX = min(0, v.translation.width)
+            }
+            .onEnded { v in
+                guard isDragging else { return }
+                isDragging = false
+                let shouldClose = v.translation.width < -drawerWidth * 0.3
+                    || v.predictedEndTranslation.width < -drawerWidth * 0.6
+                setDrawer(open: !shouldClose)
+            }
+    }
+
+    private func setDrawer(open: Bool) {
+        if open && !drawerOpen { Haptics.light() }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.88)) {
+            drawerOpen = open
+            dragX = 0
+        }
     }
 
     private func seedIfNeeded() {
