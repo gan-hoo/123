@@ -62,9 +62,11 @@ struct RootView: View {
                         .onTapGesture { setDrawer(open: false) }
                         .accessibilityIdentifier("drawerScrim")
                 }
-                // 遮罩延伸到状态栏区域，避免导航栏背景在状态栏处被裁掉
+                // 关闭时遮罩覆盖整屏（导航栏背景延伸到状态栏）；
+                // 打开时顶部收到状态栏下方，主页卡片不会顶到状态栏
                 .mask {
                     RoundedRectangle(cornerRadius: 28 * progress, style: .continuous)
+                        .padding(.top, geo.safeAreaInsets.top * progress)
                         .ignoresSafeArea()
                 }
                 .shadow(color: .black.opacity(0.18 * progress), radius: 16)
