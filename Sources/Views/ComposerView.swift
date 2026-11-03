@@ -1,0 +1,242 @@
+import SwiftUI
+import SwiftData
+import PhotosUI
+
+struct ComposerView: View {
+    let memo: Memo?
+    var presetTag: String?
+
+    @Environment(\.modelContext) private var context
+    @Environment(\.dismiss) private var dismiss
+
+    @Query(filter: #Predicate<Memo> { $0.trashedAt == nil })
+    private var allMemos: [Memo]
+
+    @State private var text = ""
+    @State private var images: [Data] = []
+    @State private var pickerItems: [PhotosPickerItem] = []
+    @State private var loaded = false
+    @FocusState private var focused: Bool
+
+    private let maxImages = 9
+
+    private var canSave: Bool {
+        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !images.isEmpty
+    }
+
+    /// 光标默认在末尾：正在输入的 `#xxx`
+    private var partialTag: String? {
+        guard let hashIdx = text.lastIndex(of: "#") else { return nil }
+        if hashIdx != text.startIndex {
+            let prev = text[text.index(before: hashIdx)]
+            if !prev.isWhitespace { return nil }
+        }
+        let after = text[text.index(after: hashIdx)...]
+        if after.contains(where: { $0.isWhitespace }) { return nil }
+        return String(after)
+    }
+
+    private var suggestions: [String] {
+        guard let p = partialTag else { return [] }
+        let all = TagParser.allTags(from: allMemos)
+        let matched = all.filter { p.isEmpty || ($0.localizedCaseInsensitiveContains(p) && $0 != p) }
+        return Array(matched.prefix(12))
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                editor
+
+                if !images.isEmpty {
+                    imageStrip
+                }
+
+                let tags = suggestions
+                if !tags.isEmpty {
+                    ScrollView(.horizontal, showsIndicators: false) {
+                        HStack(spacing: 8) {
+                            ForEach(tags, id: \.self) { tag in
+                                Button("#" + tag) { apply(tag) }
+                                    .font(.subheadline)
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 5)
+                                    .background(Theme.accent.opacity(0.12), in: Capsule())
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                    }
+                }
+
+                Divider()
+                toolbarRow
+            }
+            .navigationTitle(memo == nil ? "新建笔记" : "编辑笔记")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("取消") { dismiss() }
+                }
+            }
+        }
+        .onAppear(perform: load)
+        .onChange(of: pickerItems) { _, items in
+            guard !items.isEmpty else { return }
+            Task { @MainActor in
+                for item in items {
+                    guard images.count < maxImages else { break }
+                    if let data = try? await item.loadTransferable(type: Data.self) {
+                        images.append(ImageUtil.compress(data))
+                    }
+                }
+                pickerItems = []
+            }
+        }
+    }
+
+    private var editor: some View {
+        ZStack(alignment: .topLeading) {
+            TextEditor(text: $text)
+                .focused($focused)
+                .scrollContentBackground(.hidden)
+                .font(.body)
+                .lineSpacing(4)
+                .padding(.horizontal, 12)
+                .padding(.top, 4)
+            if text.isEmpty {
+                Text("现在的想法是…")
+                    .foregroundStyle(.tertiary)
+                    .padding(.horizontal, 17)
+                    .padding(.top, 12)
+                    .allowsHitTesting(false)
+            }
+        }
+        .frame(maxHeight: .infinity)
+    }
+
+    private var imageStrip: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 8) {
+                ForEach(Array(images.enumerated()), id: \.offset) { index, data in
+                    ZStack(alignment: .topTrailing) {
+                        Group {
+                            if let ui = UIImage(data: data) {
+                                Image(uiImage: ui).resizable().scaledToFill()
+                            } else {
+                                Color(.tertiarySystemFill)
+                            }
+                        }
+                        .frame(width: 64, height: 64)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+                        Button {
+                            withAnimation { _ = images.remove(at: index) }
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .symbolRenderingMode(.palette)
+                                .foregroundStyle(.white, .black.opacity(0.6))
+                        }
+                        .offset(x: 6, y: -6)
+                    }
+                }
+            }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+        }
+    }
+
+    private var toolbarRow: some View {
+        HStack(spacing: 22) {
+            Button { insertTag() } label: {
+                Image(systemName: "number")
+            }
+            PhotosPicker(selection: $pickerItems,
+                         maxSelectionCount: max(1, maxImages - images.count),
+                         matching: .images) {
+                Image(systemName: "photo")
+            }
+            .disabled(images.count >= maxImages)
+            Button { insertList() } label: {
+                Image(systemName: "list.bullet")
+            }
+            Spacer()
+            Button(action: save) {
+                Image(systemName: "paperplane.fill")
+                    .font(.body)
+                    .foregroundStyle(.white)
+                    .frame(width: 54, height: 34)
+                    .background(canSave ? Theme.accent : Color.gray.opacity(0.35), in: Capsule())
+            }
+            .disabled(!canSave)
+        }
+        .font(.title3)
+        .foregroundStyle(.secondary)
+        .padding(.horizontal, 18)
+        .padding(.vertical, 10)
+    }
+
+    // MARK: - Actions
+
+    private func load() {
+        guard !loaded else { return }
+        loaded = true
+        if let memo {
+            text = memo.content
+            images = memo.sortedImages.map(\.data)
+        } else if let presetTag {
+            text = "#\(presetTag) "
+        }
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+            focused = true
+        }
+    }
+
+    private func insertTag() {
+        if !text.isEmpty, let last = text.last, !last.isWhitespace {
+            text += " "
+        }
+        text += "#"
+    }
+
+    private func insertList() {
+        if !text.isEmpty && !text.hasSuffix("\n") {
+            text += "\n"
+        }
+        text += "- "
+    }
+
+    private func apply(_ tag: String) {
+        guard let p = partialTag else { return }
+        text.removeLast(p.count)
+        text += tag + " "
+    }
+
+    private func save() {
+        guard canSave else { return }
+        let content = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        let target: Memo
+        if let memo {
+            target = memo
+            target.content = content
+            target.updatedAt = Date()
+            for old in target.images ?? [] {
+                context.delete(old)
+            }
+            target.images = []
+        } else {
+            target = Memo(content: content)
+            context.insert(target)
+        }
+        var newImages: [MemoImage] = []
+        for (i, data) in images.enumerated() {
+            let img = MemoImage(data: data, order: i)
+            context.insert(img)
+            newImages.append(img)
+        }
+        target.images = newImages
+        try? context.save()
+        Haptics.success()
+        dismiss()
+    }
+}
