@@ -92,6 +92,8 @@ struct MemoListView: View {
                 Button(action: onMenu) {
                     Image(systemName: "line.3.horizontal")
                 }
+                .accessibilityIdentifier("menuButton")
+                .accessibilityLabel("菜单")
             }
             if filter != .all {
                 ToolbarItem(placement: .topBarTrailing) {

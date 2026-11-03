@@ -37,6 +37,13 @@ final class DrawerUITests: XCTestCase {
         start.press(forDuration: 0.05, thenDragTo: end, withVelocity: velocity, thenHoldForDuration: 0)
     }
 
+    /// iOS 26 导航栏中直接 tap() 会因无障碍滚动失败，改为按坐标点击
+    private func tapMenuButton() {
+        let button = app.buttons["menuButton"]
+        XCTAssertTrue(button.waitForExistence(timeout: 3))
+        button.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
     private func snapshot(_ name: String) {
         let shot = XCTAttachment(screenshot: app.screenshot())
         shot.name = name
@@ -74,7 +81,7 @@ final class DrawerUITests: XCTestCase {
     }
 
     func testMenuButtonOpens() {
-        app.navigationBars.buttons.firstMatch.tap()
+        tapMenuButton()
         XCTAssertTrue(waitDrawer(open: true), "点击菜单按钮应打开侧边栏")
     }
 
@@ -100,7 +107,7 @@ final class DrawerUITests: XCTestCase {
     }
 
     func testTapContentCloses() {
-        app.navigationBars.buttons.firstMatch.tap()
+        tapMenuButton()
         XCTAssertTrue(waitDrawer(open: true))
         app.windows.firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         XCTAssertTrue(waitDrawer(open: false), "点击右侧主页区域应收起侧边栏")
