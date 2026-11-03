@@ -218,6 +218,10 @@ struct ComposerView: View {
         let target: Memo
         if let memo {
             target = memo
+            let oldImages = memo.sortedImages.map(\.data)
+            if memo.content != content || oldImages != images {
+                memo.snapshot(in: context)
+            }
             target.content = content
             target.updatedAt = Date()
             for old in target.images ?? [] {

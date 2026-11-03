@@ -9,6 +9,13 @@ struct BackupMemo: Codable {
     var isPinned: Bool
     var trashedAt: Date?
     var images: [Data]
+    var revisions: [BackupRevision]?
+}
+
+struct BackupRevision: Codable {
+    var content: String
+    var savedAt: Date
+    var imageCount: Int
 }
 
 struct BackupFile: Codable {
@@ -51,7 +58,10 @@ enum Backup {
                        updatedAt: $0.updatedAt,
                        isPinned: $0.isPinned,
                        trashedAt: $0.trashedAt,
-                       images: $0.sortedImages.map(\.data))
+                       images: $0.sortedImages.map(\.data),
+                       revisions: $0.sortedRevisions.map { r in
+                           BackupRevision(content: r.content, savedAt: r.savedAt, imageCount: r.imageCount)
+                       })
         })
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
@@ -91,6 +101,13 @@ enum Backup {
                 imgs.append(img)
             }
             memo.images = imgs
+            var revs: [MemoRevision] = []
+            for r in item.revisions ?? [] {
+                let rev = MemoRevision(content: r.content, savedAt: r.savedAt, imageCount: r.imageCount)
+                context.insert(rev)
+                revs.append(rev)
+            }
+            memo.revisions = revs
             added += 1
         }
         try context.save()

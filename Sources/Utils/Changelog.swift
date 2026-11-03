@@ -12,6 +12,16 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.8.0", date: "2026-11-03", title: "历史版本",
+            items: [
+                "编辑笔记时自动保存旧版本，卡片上显示「已编辑」",
+                "卡片 ··· 菜单 → 历史版本：查看每个版本的保存时间和内容",
+                "对比改动：删除的行标红划线，新增的行标绿",
+                "可恢复任意历史版本，恢复前当前内容也会自动保存，不会丢失",
+                "备份文件包含历史版本",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.7.2", date: "2026-11-03", title: "示例笔记改名",
             items: [
                 "旧版自带的两条示例笔记中的「闪念」「拾念」自动改为 Jin Notes，标签改为 #JinNotes/入门",

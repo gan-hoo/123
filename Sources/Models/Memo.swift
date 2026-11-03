@@ -13,6 +13,10 @@ final class Memo {
     @Relationship(deleteRule: .cascade, inverse: \MemoImage.memo)
     var images: [MemoImage]? = []
 
+    /// 历史版本（每次编辑保存前的旧内容）
+    @Relationship(deleteRule: .cascade, inverse: \MemoRevision.memo)
+    var revisions: [MemoRevision]? = []
+
     init(content: String, createdAt: Date = Date()) {
         self.content = content
         self.createdAt = createdAt
@@ -22,6 +26,22 @@ final class Memo {
     /// 笔记中出现的标签（不含 #）
     var tags: [String] { TagParser.tags(in: content) }
 
+    /// 历史版本，最新的在前
+    var sortedRevisions: [MemoRevision] {
+        (revisions ?? []).sorted { $0.savedAt > $1.savedAt }
+    }
+
+    var revisionCount: Int { revisions?.count ?? 0 }
+
+    /// 把当前内容存为一个历史版本
+    func snapshot(in context: ModelContext) {
+        let rev = MemoRevision(content: content, savedAt: updatedAt, imageCount: images?.count ?? 0)
+        context.insert(rev)
+        rev.memo = self
+        if revisions == nil { revisions = [] }
+        revisions?.append(rev)
+    }
+
     var sortedImages: [MemoImage] {
         (images ?? []).sorted { $0.order < $1.order }
     }
@@ -29,6 +49,21 @@ final class Memo {
     /// 是否属于某个标签（含子标签）
     func has(tag: String) -> Bool {
         tags.contains { $0 == tag || $0.hasPrefix(tag + "/") }
+    }
+}
+
+@Model
+final class MemoRevision {
+    var content: String = ""
+    /// 这个版本最后保存的时间
+    var savedAt: Date = Date()
+    var imageCount: Int = 0
+    var memo: Memo?
+
+    init(content: String, savedAt: Date, imageCount: Int = 0) {
+        self.content = content
+        self.savedAt = savedAt
+        self.imageCount = imageCount
     }
 }
 

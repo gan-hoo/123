@@ -11,6 +11,7 @@ struct MemoCard: View {
 
     @State private var expanded = false
     @State private var preview: PreviewImage?
+    @State private var showHistory = false
 
     private var isLong: Bool {
         memo.content.count > 280 || memo.content.split(separator: "\n", omittingEmptySubsequences: false).count > 10
@@ -53,6 +54,11 @@ struct MemoCard: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .contextMenu { menuItems }
+        .sheet(isPresented: $showHistory) {
+            ThemedRoot {
+                RevisionHistoryView(memo: memo)
+            }
+        }
         .fullScreenCover(item: $preview) { item in
             ImagePreview(data: item.data)
         }
@@ -64,6 +70,11 @@ struct MemoCard: View {
                 .font(.caption)
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
+            if memo.revisionCount > 0 {
+                Text("已编辑")
+                    .font(.caption2)
+                    .foregroundStyle(.tertiary)
+            }
             if memo.isPinned {
                 Image(systemName: "pin.fill")
                     .font(.caption2)
@@ -78,6 +89,7 @@ struct MemoCard: View {
                     .frame(width: 32, height: 22)
                     .contentShape(Rectangle())
             }
+            .accessibilityIdentifier("memoMenu")
         }
     }
 
@@ -90,6 +102,13 @@ struct MemoCard: View {
         }
         Button(action: onEdit) {
             Label("编辑", systemImage: "square.and.pencil")
+        }
+        if memo.revisionCount > 0 {
+            Button {
+                showHistory = true
+            } label: {
+                Label("历史版本（\(memo.revisionCount)）", systemImage: "clock.arrow.circlepath")
+            }
         }
         Button {
             UIPasteboard.general.string = memo.content

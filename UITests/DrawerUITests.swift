@@ -167,4 +167,45 @@ final class DrawerUITests: XCTestCase {
         XCTAssertFalse(legacy.exists, "示例笔记中不应再出现「闪念」")
         snapshot("legacy-migrated")
     }
+
+    // MARK: - 历史版本
+
+    private func tapCenter(_ e: XCUIElement) {
+        e.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+    }
+
+    func testEditCreatesRevisionHistory() {
+        let menu = app.buttons["memoMenu"].firstMatch
+        XCTAssertTrue(menu.waitForExistence(timeout: 3))
+        tapCenter(menu)
+        let editItem = app.buttons["编辑"].firstMatch
+        XCTAssertTrue(editItem.waitForExistence(timeout: 3))
+        tapCenter(editItem)
+
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3), "应打开编辑器")
+        editor.tap()
+        editor.typeText("\n这是新增的一行")
+        tapCenter(app.buttons["sendMemo"])
+
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "已编辑")).firstMatch
+            .waitForExistence(timeout: 3), "编辑后卡片应显示「已编辑」")
+
+        tapCenter(app.buttons["memoMenu"].firstMatch)
+        let historyItem = app.buttons.matching(NSPredicate(format: "label BEGINSWITH %@", "历史版本")).firstMatch
+        XCTAssertTrue(historyItem.waitForExistence(timeout: 3), "菜单中应有「历史版本」")
+        tapCenter(historyItem)
+
+        XCTAssertTrue(app.staticTexts["当前版本"].waitForExistence(timeout: 3), "历史列表应显示当前版本")
+        snapshot("revision-list")
+
+        // 打开旧版本，查看改动
+        let cells = app.cells
+        XCTAssertGreaterThanOrEqual(cells.count, 2, "应至少有当前版本和一个历史版本")
+        tapCenter(cells.element(boundBy: 1))
+        let added = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "这是新增的一行")).firstMatch
+        XCTAssertTrue(added.waitForExistence(timeout: 3), "改动对比中应显示新增的行")
+        XCTAssertTrue(app.buttons["restoreRevision"].exists, "历史版本应可恢复")
+        snapshot("revision-diff")
+    }
 }
