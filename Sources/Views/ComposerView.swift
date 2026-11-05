@@ -6,6 +6,8 @@ struct ComposerView: View {
     @Environment(\.accent) private var accent
     let memo: Memo?
     var presetTag: String?
+    /// false：以阅读模式打开，点「编辑」后才可编辑
+    var startEditing: Bool = true
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismissPresentation
@@ -39,6 +41,7 @@ struct ComposerView: View {
     @State private var pullDistance: CGFloat = 0
     /// 下拉后固定显示时间，往上滑再隐藏
     @State private var showDate = false
+    @State private var isEditing = true
     @State private var title = ""
     @State private var originalTitle = ""
     @State private var keyboardVisible = false
@@ -117,10 +120,15 @@ struct ComposerView: View {
                 dateRow
                     .transition(.move(edge: .top).combined(with: .opacity))
             }
-            titleField
+            if isEditing || !title.isEmpty {
+                titleField
+            }
             editorWithDate
             suggestionBar
-            toolbarRow
+            if isEditing {
+                toolbarRow
+                    .transition(.move(edge: .bottom).combined(with: .opacity))
+            }
         }
         .background(Color(.systemBackground).ignoresSafeArea())
         .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
@@ -163,6 +171,7 @@ struct ComposerView: View {
     private var titleField: some View {
         VStack(spacing: 0) {
             TextField("标题", text: $title)
+                .disabled(!isEditing)
                 .font(.title3.weight(.semibold))
                 .focused($titleFocused)
                 .submitLabel(.next)
@@ -267,12 +276,16 @@ struct ComposerView: View {
         HStack(spacing: 10) {
             backButton
             Spacer()
-            if !undoStack.isEmpty || !redoStack.isEmpty {
+            if isEditing && (!undoStack.isEmpty || !redoStack.isEmpty) {
                 undoRedoCapsule
                     .transition(.scale.combined(with: .opacity))
             }
             actionsCapsule
-            doneButton
+            if isEditing {
+                doneButton
+            } else {
+                startEditButton
+            }
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
@@ -362,6 +375,23 @@ struct ComposerView: View {
         }
     }
 
+    /// 阅读模式下的「编辑」按钮
+    private var startEditButton: some View {
+        Button {
+            withAnimation(.easeOut(duration: 0.2)) { isEditing = true }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) { focusRequest = true }
+        } label: {
+            Text("编辑")
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.white)
+                .padding(.horizontal, 18)
+                .frame(height: 46)
+                .background(Capsule().fill(accent))
+                .shadow(color: accent.opacity(0.35), radius: 6, y: 2)
+        }
+        .accessibilityIdentifier("startEditing")
+    }
+
     private var doneButton: some View {
         Button(action: save) {
             Image(systemName: "checkmark")
@@ -388,8 +418,9 @@ struct ComposerView: View {
         ZStack(alignment: .topLeading) {
             TagTextEditor(text: $text, images: images, focusRequest: $focusRequest,
                           accent: accent, controller: controller,
-                          onPull: { handlePull($0) })
-            if text.isEmpty {
+                          onPull: { handlePull($0) },
+                          editable: isEditing)
+            if text.isEmpty && isEditing {
                 Text("开始记录…")
                     .font(.body)
                     .foregroundStyle(.tertiary)
@@ -473,8 +504,11 @@ struct ComposerView: View {
         originalTitle = title
         // 载入完成后才开始记录撤销历史
         DispatchQueue.main.async { historyReady = true }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            focusRequest = true
+        isEditing = startEditing || memo == nil
+        if isEditing {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                focusRequest = true
+            }
         }
     }
 

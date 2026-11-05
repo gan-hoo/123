@@ -46,6 +46,7 @@ struct MemoListView: View {
                         MemoCard(
                             memo: memo,
                             onEdit: { editor.open(memo: memo) },
+                            onOpen: { editor.open(memo: memo, editing: false) },
                             onTagTap: { tag in
                                 search = ""
                                 withAnimation { filter = .tag(tag) }

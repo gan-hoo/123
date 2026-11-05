@@ -34,7 +34,9 @@ struct ReviewView: View {
                                 Text(Fmt.relative(memo.createdAt))
                                     .font(.headline)
                                     .foregroundStyle(accent)
-                                MemoCard(memo: memo, alwaysExpanded: true, onEdit: { editor.open(memo: memo) })
+                                MemoCard(memo: memo, alwaysExpanded: true,
+                                         onEdit: { editor.open(memo: memo) },
+                                         onOpen: { editor.open(memo: memo, editing: false) })
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 16)

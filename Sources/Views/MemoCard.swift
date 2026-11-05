@@ -7,6 +7,8 @@ struct MemoCard: View {
     let memo: Memo
     var alwaysExpanded = false
     var onEdit: () -> Void
+    /// 点击卡片：以阅读模式打开
+    var onOpen: (() -> Void)?
     var onTagTap: (String) -> Void = { _ in }
 
     @State private var expanded = false
@@ -100,6 +102,8 @@ struct MemoCard: View {
             }
         }
         .padding(14)
+        .contentShape(Rectangle())
+        .onTapGesture { onOpen?() }
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
         .contextMenu { menuItems }

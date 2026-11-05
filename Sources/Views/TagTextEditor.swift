@@ -27,6 +27,8 @@ struct TagTextEditor: UIViewRepresentable {
     @Binding var focusRequest: Bool
     var accent: Color
     var controller: EditorController?
+    /// false 时为只读（阅读模式）
+    var editable: Bool = true
     /// 顶部下拉距离（正数）/ 往上滑动距离（负数），用于显示 / 隐藏时间
     var onPull: ((CGFloat) -> Void)?
 
@@ -46,6 +48,7 @@ struct TagTextEditor: UIViewRepresentable {
         tv.keyboardDismissMode = .interactive
         tv.alwaysBounceVertical = true
         tv.autocorrectionType = .default
+        tv.isEditable = editable
         let c = context.coordinator
         c.textView = tv
         c.accent = UIColor(accent)
@@ -58,6 +61,9 @@ struct TagTextEditor: UIViewRepresentable {
         let c = context.coordinator
         c.parent = self
         controller?.coordinator = c
+        if tv.isEditable != editable {
+            tv.isEditable = editable
+        }
 
         var needsStyle = false
         let newAccent = UIColor(accent)

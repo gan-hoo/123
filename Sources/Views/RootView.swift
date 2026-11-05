@@ -82,7 +82,8 @@ struct RootView: View {
                         Color.black
                             .opacity(editorScrimOpacity(width: geo.size.width))
                             .ignoresSafeArea()
-                        ComposerView(memo: editor.memo, presetTag: editor.presetTag)
+                        ComposerView(memo: editor.memo, presetTag: editor.presetTag,
+                                     startEditing: editor.startEditing)
                             .id(editor.session)
                             .shadow(color: .black.opacity(editorDragX > 0 ? 0.15 : 0), radius: 12)
                             .offset(x: editorDragX)

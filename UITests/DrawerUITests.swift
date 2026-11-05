@@ -345,4 +345,22 @@ final class DrawerUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["我的标题"].waitForExistence(timeout: 3), "卡片上应显示标题")
         snapshot("card-with-title")
     }
+
+    // MARK: - 点卡片先阅读，点「编辑」才编辑
+
+    func testTapCardOpensReadMode() {
+        let card = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "不要追求完美")).firstMatch
+        XCTAssertTrue(card.waitForExistence(timeout: 3))
+        tapCenter(card)
+        let edit = app.buttons["startEditing"]
+        XCTAssertTrue(edit.waitForExistence(timeout: 3), "点卡片应以阅读模式打开，显示「编辑」按钮")
+        sleep(1)
+        XCTAssertEqual(app.keyboards.count, 0, "阅读模式不应弹出键盘")
+        XCTAssertFalse(app.buttons["sendMemo"].exists, "阅读模式不显示完成按钮")
+        snapshot("read-mode")
+        tapCenter(edit)
+        XCTAssertTrue(app.buttons["sendMemo"].waitForExistence(timeout: 3), "点编辑后应进入编辑模式")
+        XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3), "点编辑后应弹出键盘")
+        snapshot("edit-mode")
+    }
 }
