@@ -418,8 +418,8 @@ struct ComposerView: View {
         ZStack(alignment: .topLeading) {
             TagTextEditor(text: $text, images: images, focusRequest: $focusRequest,
                           accent: accent, controller: controller,
-                          onPull: { handlePull($0) },
-                          editable: isEditing)
+                          editable: isEditing,
+                          onPull: { handlePull($0) })
             if text.isEmpty && isEditing {
                 Text("开始记录…")
                     .font(.body)

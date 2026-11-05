@@ -313,7 +313,10 @@ final class DrawerUITests: XCTestCase {
             RunLoop.current.run(until: Date().addingTimeInterval(0.2))
         }
         snapshot("after-swipe-exit")
-        XCTAssertTrue(add.exists && add.isHittable, "应回到主页")
+        // 回到主页后，点 ＋ 应能再次打开编辑器（确认主页可正常操作）
+        XCTAssertTrue(add.waitForExistence(timeout: 3), "应回到主页")
+        tapCenter(add)
+        XCTAssertTrue(app.textViews.firstMatch.waitForExistence(timeout: 3), "退出后主页应可正常操作")
     }
 
     func testSwipeRightWithChangesAsks() {
