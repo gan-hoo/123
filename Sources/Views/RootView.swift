@@ -80,7 +80,7 @@ struct RootView: View {
                 if editor.isOpen {
                     ZStack {
                         Color.black
-                            .opacity(0.12 * (1 - min(1, editorDragX / max(geo.size.width, 1))))
+                            .opacity(editorScrimOpacity(width: geo.size.width))
                             .ignoresSafeArea()
                         ComposerView(memo: editor.memo, presetTag: editor.presetTag)
                             .id(editor.session)
@@ -147,6 +147,13 @@ struct RootView: View {
             migrateLegacySampleNames()
             purgeTrash()
         }
+    }
+
+    /// 编辑器右滑时，下面主页上的遮罩透明度
+    private func editorScrimOpacity(width: CGFloat) -> Double {
+        let w: CGFloat = max(width, 1)
+        let ratio: CGFloat = min(1, editorDragX / w)
+        return Double(0.12 * (1 - ratio))
     }
 
     // MARK: - 侧边栏
