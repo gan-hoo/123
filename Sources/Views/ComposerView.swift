@@ -19,6 +19,13 @@ struct ComposerView: View {
     @State private var controller = EditorController()
     /// 编辑区顶部下拉的距离，下拉时才显示时间
     @State private var pullDistance: CGFloat = 0
+
+    // 撤销 / 重做
+    @State private var undoStack: [String] = []
+    @State private var redoStack: [String] = []
+    @State private var lastEditTime = Date.distantPast
+    @State private var applyingHistory = false
+    @State private var historyReady = false
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var loaded = false
     @State private var focusRequest = false
@@ -106,6 +113,9 @@ struct ComposerView: View {
         }
         .background(Color(.systemBackground).ignoresSafeArea())
         .onAppear(perform: load)
+        .onChange(of: text) { old, new in
+            recordHistory(old: old, new: new)
+        }
         .onChange(of: pickerItems) { _, items in
             guard !items.isEmpty else { return }
             Task { @MainActor in
@@ -161,6 +171,31 @@ struct ComposerView: View {
             .accessibilityLabel("返回")
 
             Spacer()
+
+            if !undoStack.isEmpty || !redoStack.isEmpty {
+                HStack(spacing: 0) {
+                    Button(action: undo) {
+                        Image(systemName: "arrow.uturn.backward")
+                            .frame(width: 44, height: 46)
+                    }
+                    .disabled(undoStack.isEmpty)
+                    .accessibilityIdentifier("undoButton")
+                    .accessibilityLabel("撤销")
+
+                    Button(action: redo) {
+                        Image(systemName: "arrow.uturn.forward")
+                            .frame(width: 44, height: 46)
+                    }
+                    .disabled(redoStack.isEmpty)
+                    .accessibilityIdentifier("redoButton")
+                    .accessibilityLabel("重做")
+                }
+                .font(.title3)
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 4)
+                .background(roundBackground(Capsule()))
+                .transition(.scale.combined(with: .opacity))
+            }
 
             HStack(spacing: 0) {
                 ShareLink(item: RichContent.plainText(text)) {
@@ -310,13 +345,55 @@ struct ComposerView: View {
             text = "#\(presetTag) "
         }
         originalText = text
+        // 载入完成后才开始记录撤销历史
+        DispatchQueue.main.async { historyReady = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             focusRequest = true
         }
     }
 
+    // MARK: - 撤销 / 重做
+
+    /// 连续输入（间隔不到 1 秒）合并为一步
+    private func recordHistory(old: String, new: String) {
+        guard historyReady, old != new else { return }
+        if applyingHistory {
+            applyingHistory = false
+            return
+        }
+        let now = Date()
+        if now.timeIntervalSince(lastEditTime) > 1.0 || undoStack.isEmpty {
+            withAnimation(.easeOut(duration: 0.2)) {
+                undoStack.append(old)
+            }
+            if undoStack.count > 200 { undoStack.removeFirst() }
+        }
+        lastEditTime = now
+        if !redoStack.isEmpty { redoStack.removeAll() }
+    }
+
+    private func undo() {
+        guard let previous = undoStack.popLast() else { return }
+        redoStack.append(text)
+        applyingHistory = true
+        lastEditTime = .distantPast
+        text = previous
+        Haptics.light()
+    }
+
+    private func redo() {
+        guard let next = redoStack.popLast() else { return }
+        undoStack.append(text)
+        applyingHistory = true
+        lastEditTime = .distantPast
+        text = next
+        Haptics.light()
+    }
+
     /// 在光标处插入图片
     private func insertImage(_ data: Data) {
+        // 插入图片单独算一步
+        lastEditTime = .distantPast
         let key = UUID().uuidString
         images[key] = data
         if !controller.insertImage(key: key, data: data) {
@@ -341,6 +418,7 @@ struct ComposerView: View {
     }
 
     private func insertTag() {
+        lastEditTime = .distantPast
         if !text.isEmpty, let last = text.last, !last.isWhitespace {
             text += " "
         }
@@ -348,6 +426,7 @@ struct ComposerView: View {
     }
 
     private func insertList() {
+        lastEditTime = .distantPast
         if !text.isEmpty && !text.hasSuffix("\n") {
             text += "\n"
         }

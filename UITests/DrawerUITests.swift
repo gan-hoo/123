@@ -264,4 +264,26 @@ final class DrawerUITests: XCTestCase {
         start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 1.0)
         snapshot("composer-date-pulled")
     }
+
+    // MARK: - 撤销 / 重做
+
+    func testUndoRedo() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        editor.tap()
+        editor.typeText("第一段")
+        sleep(2)
+        editor.typeText("第二段")
+        sleep(1)
+        let undo = app.buttons["undoButton"]
+        XCTAssertTrue(undo.waitForExistence(timeout: 3), "有输入后应出现撤销按钮")
+        snapshot("undo-redo-buttons")
+        tapCenter(undo)
+        var value = editor.value as? String ?? ""
+        XCTAssertTrue(value.contains("第一段") && !value.contains("第二段"), "撤销应去掉最后一段输入，实际：\(value)")
+        tapCenter(app.buttons["redoButton"])
+        value = editor.value as? String ?? ""
+        XCTAssertTrue(value.contains("第二段"), "重做应恢复，实际：\(value)")
+    }
 }
