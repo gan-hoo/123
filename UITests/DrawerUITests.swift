@@ -248,4 +248,20 @@ final class DrawerUITests: XCTestCase {
         XCTAssertLessThan(image.frame.minY, after.frame.minY, "后面的文字应在图片下方")
         snapshot("card-inline-image")
     }
+
+    // MARK: - 编辑器时间：下拉才显示
+
+    func testComposerDateShowsOnPullDown() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        // 先收起键盘
+        app.buttons["收起键盘"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        sleep(1)
+        snapshot("composer-date-hidden")
+        let start = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
+        let end = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
+        start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 1.0)
+        snapshot("composer-date-pulled")
+    }
 }

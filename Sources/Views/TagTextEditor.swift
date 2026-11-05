@@ -27,6 +27,8 @@ struct TagTextEditor: UIViewRepresentable {
     @Binding var focusRequest: Bool
     var accent: Color
     var controller: EditorController?
+    /// 顶部下拉距离（用于下拉显示时间）
+    var onPull: ((CGFloat) -> Void)?
 
     static let insets = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
 
@@ -89,6 +91,7 @@ struct TagTextEditor: UIViewRepresentable {
         var parent: TagTextEditor
         var accent: UIColor = .systemGreen
         weak var textView: UITextView?
+        private var lastPull: CGFloat = 0
 
         init(_ parent: TagTextEditor) {
             self.parent = parent
@@ -212,6 +215,15 @@ struct TagTextEditor: UIViewRepresentable {
         func textViewDidChange(_ tv: UITextView) {
             sync(tv)
             restyle(tv)
+        }
+
+        func scrollViewDidScroll(_ scrollView: UIScrollView) {
+            let pull = max(0, -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top))
+            // 只在变化明显时通知，避免频繁刷新
+            if abs(pull - lastPull) > 1 || (pull == 0 && lastPull != 0) {
+                lastPull = pull
+                parent.onPull?(pull)
+            }
         }
 
         func textViewDidChangeSelection(_ tv: UITextView) {

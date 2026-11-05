@@ -17,6 +17,8 @@ struct ComposerView: View {
     /// 图片 key → 图片数据；正文中用 [[img:key]] 标记位置
     @State private var images: [String: Data] = [:]
     @State private var controller = EditorController()
+    /// 编辑区顶部下拉的距离，下拉时才显示时间
+    @State private var pullDistance: CGFloat = 0
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var loaded = false
     @State private var focusRequest = false
@@ -68,14 +70,19 @@ struct ComposerView: View {
         VStack(spacing: 0) {
             topBar
 
-            Text(dateLine)
-                .font(.footnote)
-                .monospacedDigit()
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity)
-                .padding(.top, 6)
-
             editor
+                .overlay(alignment: .top) {
+                    // 平时隐藏，下拉编辑区时渐显
+                    Text(dateLine)
+                        .font(.footnote)
+                        .monospacedDigit()
+                        .foregroundStyle(.secondary)
+                        .opacity(min(1, max(0, (pullDistance - 8) / 32)))
+                        .offset(y: min(pullDistance, 60) / 2 - 6)
+                        .allowsHitTesting(false)
+                        .accessibilityIdentifier("composerDate")
+                }
+                .padding(.top, 4)
 
 
             let tags = suggestions
@@ -223,7 +230,8 @@ struct ComposerView: View {
     private var editor: some View {
         ZStack(alignment: .topLeading) {
             TagTextEditor(text: $text, images: images, focusRequest: $focusRequest,
-                          accent: accent, controller: controller)
+                          accent: accent, controller: controller,
+                          onPull: { pullDistance = $0 })
             if text.isEmpty {
                 Text("现在的想法是…")
                     .font(.body)
