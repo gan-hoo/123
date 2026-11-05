@@ -298,7 +298,14 @@ final class DrawerUITests: XCTestCase {
         let deadline = Date().addingTimeInterval(3)
         while editor.exists && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
         XCTAssertFalse(editor.exists, "没有修改时，左边缘右滑应直接退出编辑器")
-        XCTAssertTrue(app.buttons["newMemo"].isHittable, "应回到主页")
+        // 等退出动画结束
+        let add = app.buttons["newMemo"]
+        let until = Date().addingTimeInterval(3)
+        while !(add.exists && add.isHittable) && Date() < until {
+            RunLoop.current.run(until: Date().addingTimeInterval(0.2))
+        }
+        snapshot("after-swipe-exit")
+        XCTAssertTrue(add.exists && add.isHittable, "应回到主页")
     }
 
     func testSwipeRightWithChangesAsks() {
