@@ -8,7 +8,25 @@ struct ComposerView: View {
     var presetTag: String?
 
     @Environment(\.modelContext) private var context
-    @Environment(\.dismiss) private var dismiss
+    @Environment(\.dismiss) private var dismissPresentation
+    @Environment(EditorPresenter.self) private var presenter: EditorPresenter?
+
+    private func dismiss() {
+        if let presenter, presenter.isOpen {
+            presenter.close()
+        } else {
+            dismissPresentation()
+        }
+    }
+
+    /// 返回：有未保存的修改时先询问
+    private func attemptBack() {
+        if hasChanges && canSave {
+            confirmDiscard = true
+        } else {
+            dismiss()
+        }
+    }
 
     @Query(filter: #Predicate<Memo> { $0.trashedAt == nil })
     private var allMemos: [Memo]
@@ -115,6 +133,10 @@ struct ComposerView: View {
         .onAppear(perform: load)
         .onChange(of: text) { old, new in
             recordHistory(old: old, new: new)
+            presenter?.dirty = hasChanges && canSave
+        }
+        .onChange(of: presenter?.backTrigger ?? 0) { _, _ in
+            attemptBack()
         }
         .onChange(of: pickerItems) { _, items in
             guard !items.isEmpty else { return }
@@ -154,13 +176,7 @@ struct ComposerView: View {
 
     private var topBar: some View {
         HStack(spacing: 10) {
-            Button {
-                if hasChanges && canSave {
-                    confirmDiscard = true
-                } else {
-                    dismiss()
-                }
-            } label: {
+            Button(action: attemptBack) {
                 Image(systemName: "chevron.left")
                     .font(.title3.weight(.semibold))
                     .foregroundStyle(.primary)

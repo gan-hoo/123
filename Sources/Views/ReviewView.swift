@@ -8,7 +8,7 @@ struct ReviewView: View {
 
     @State private var picks: [Memo] = []
     @State private var page = 0
-    @State private var editing: Memo?
+    @Environment(EditorPresenter.self) private var editor
 
     private var onThisDay: [Memo] {
         let cal = Calendar.current
@@ -34,7 +34,7 @@ struct ReviewView: View {
                                 Text(Fmt.relative(memo.createdAt))
                                     .font(.headline)
                                     .foregroundStyle(accent)
-                                MemoCard(memo: memo, alwaysExpanded: true, onEdit: { editing = memo })
+                                MemoCard(memo: memo, alwaysExpanded: true, onEdit: { editor.open(memo: memo) })
                             }
                             .padding(.horizontal, 20)
                             .padding(.top, 16)
@@ -62,11 +62,6 @@ struct ReviewView: View {
         }
         .onAppear {
             if picks.isEmpty { shuffle() }
-        }
-        .fullScreenCover(item: $editing) { memo in
-            ThemedRoot {
-                ComposerView(memo: memo, presetTag: nil)
-            }
         }
     }
 

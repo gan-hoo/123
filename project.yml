@@ -16,7 +16,7 @@ targets:
       properties:
         CFBundleDisplayName: Jin Notes
         CFBundleShortVersionString: "2.0.0"
-        CFBundleVersion: "25"
+        CFBundleVersion: "26"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -46,7 +46,7 @@ targets:
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
         MARKETING_VERSION: "2.0.0"
-        CURRENT_PROJECT_VERSION: "25"
+        CURRENT_PROJECT_VERSION: "26"
         ENABLE_PREVIEWS: YES
   ShinianUITests:
     type: bundle.ui-testing

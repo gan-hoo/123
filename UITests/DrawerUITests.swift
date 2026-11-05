@@ -286,4 +286,32 @@ final class DrawerUITests: XCTestCase {
         value = editor.value as? String ?? ""
         XCTAssertTrue(value.contains("第二段"), "重做应恢复，实际：\(value)")
     }
+
+    // MARK: - 编辑器左边缘右滑退出
+
+    func testSwipeRightExitsEditor() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        sleep(1)
+        drag(CGVector(dx: 0.02, dy: 0.5), CGVector(dx: 0.85, dy: 0.5), velocity: .default)
+        let deadline = Date().addingTimeInterval(3)
+        while editor.exists && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertFalse(editor.exists, "没有修改时，左边缘右滑应直接退出编辑器")
+        XCTAssertTrue(app.buttons["newMemo"].isHittable, "应回到主页")
+    }
+
+    func testSwipeRightWithChangesAsks() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        editor.tap()
+        editor.typeText("还没保存")
+        drag(CGVector(dx: 0.02, dy: 0.5), CGVector(dx: 0.85, dy: 0.5), velocity: .default)
+        XCTAssertTrue(app.buttons["放弃修改"].waitForExistence(timeout: 3), "有修改时右滑应询问是否放弃")
+        app.buttons["放弃修改"].tap()
+        let deadline = Date().addingTimeInterval(3)
+        while editor.exists && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
+        XCTAssertFalse(editor.exists, "放弃后应退出编辑器")
+    }
 }

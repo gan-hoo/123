@@ -9,6 +9,9 @@ struct RootView: View {
     /// 手指拖动的水平位移
     @State private var dragX: CGFloat = 0
     @State private var drawerWidth: CGFloat = 320
+    @State private var editor = EditorPresenter()
+    /// 编辑器右滑退出时的位移
+    @State private var editorDragX: CGFloat = 0
     @AppStorage("didSeed") private var didSeed = false
 
     /// 左侧边缘区域：在这里开始的右滑判定更宽松
@@ -72,6 +75,22 @@ struct RootView: View {
                 .shadow(color: .black.opacity(0.18 * progress), radius: 16)
                 .offset(x: shift)
             }
+            .overlay {
+                // 编辑器：覆盖在主页上方，从右侧滑入；左边缘右滑可退出
+                if editor.isOpen {
+                    ZStack {
+                        Color.black
+                            .opacity(0.12 * (1 - min(1, editorDragX / max(geo.size.width, 1))))
+                            .ignoresSafeArea()
+                        ComposerView(memo: editor.memo, presetTag: editor.presetTag)
+                            .id(editor.session)
+                            .shadow(color: .black.opacity(editorDragX > 0 ? 0.15 : 0), radius: 12)
+                            .offset(x: editorDragX)
+                    }
+                    .transition(.move(edge: .trailing))
+                    .zIndex(10)
+                }
+            }
             .onAppear { drawerWidth = min(geo.size.width * 0.82, 340) }
             .onChange(of: geo.size.width) { _, w in drawerWidth = min(w * 0.82, 340) }
         }
@@ -79,7 +98,7 @@ struct RootView: View {
         .background(
             DrawerPanGesture(
                 isOpen: drawerOpen,
-                canOpen: path.isEmpty,
+                canOpen: path.isEmpty && !editor.isOpen,
                 edgeWidth: edgeWidth,
                 onChanged: { tx in
                     dragX = drawerOpen ? min(0, tx) : max(0, tx)
@@ -94,9 +113,35 @@ struct RootView: View {
                         let shouldOpen = vx > -200 && (tx > drawerWidth * 0.25 || vx > 250)
                         setDrawer(open: shouldOpen)
                     }
+                },
+                editorOpen: editor.isOpen,
+                onEditorChanged: { tx in
+                    editorDragX = max(0, tx)
+                },
+                onEditorEnded: { tx, vx in
+                    let width = UIScreen.main.bounds.width
+                    let shouldExit = vx > -150 && (tx > width * 0.33 || vx > 500)
+                    guard shouldExit else {
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { editorDragX = 0 }
+                        return
+                    }
+                    if editor.dirty {
+                        // 有未保存的修改：弹回并询问
+                        withAnimation(.spring(response: 0.3, dampingFraction: 0.9)) { editorDragX = 0 }
+                        editor.backTrigger += 1
+                    } else {
+                        withAnimation(.easeOut(duration: 0.22)) { editorDragX = width }
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.22) {
+                            var t = Transaction()
+                            t.disablesAnimations = true
+                            withTransaction(t) { editor.isOpen = false }
+                            editorDragX = 0
+                        }
+                    }
                 }
             )
         )
+        .environment(editor)
         .task {
             seedIfNeeded()
             migrateLegacySampleNames()

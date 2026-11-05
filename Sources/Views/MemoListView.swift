@@ -11,8 +11,7 @@ struct MemoListView: View {
     private var memos: [Memo]
 
     @State private var search = ""
-    @State private var showComposer = false
-    @State private var editing: Memo?
+    @Environment(EditorPresenter.self) private var editor
 
     private var filtered: [Memo] {
         let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
@@ -46,7 +45,7 @@ struct MemoListView: View {
                     ForEach(items) { memo in
                         MemoCard(
                             memo: memo,
-                            onEdit: { editing = memo },
+                            onEdit: { editor.open(memo: memo) },
                             onTagTap: { tag in
                                 search = ""
                                 withAnimation { filter = .tag(tag) }
@@ -72,7 +71,7 @@ struct MemoListView: View {
 
             Button {
                 Haptics.light()
-                showComposer = true
+                editor.open(memo: nil, presetTag: presetTag)
             } label: {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
@@ -103,16 +102,6 @@ struct MemoListView: View {
                         withAnimation { filter = .all }
                     }
                 }
-            }
-        }
-        .fullScreenCover(isPresented: $showComposer) {
-            ThemedRoot {
-                ComposerView(memo: nil, presetTag: presetTag)
-            }
-        }
-        .fullScreenCover(item: $editing) { memo in
-            ThemedRoot {
-                ComposerView(memo: memo, presetTag: nil)
             }
         }
     }

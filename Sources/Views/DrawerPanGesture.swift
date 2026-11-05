@@ -10,6 +10,10 @@ struct DrawerPanGesture: UIViewRepresentable {
     var edgeWidth: CGFloat
     var onChanged: (CGFloat) -> Void
     var onEnded: (_ translation: CGFloat, _ velocity: CGFloat) -> Void
+    /// 编辑器打开时：从左边缘右滑退出编辑器
+    var editorOpen: Bool = false
+    var onEditorChanged: (CGFloat) -> Void = { _ in }
+    var onEditorEnded: (_ translation: CGFloat, _ velocity: CGFloat) -> Void = { _, _ in }
 
     func makeCoordinator() -> Coordinator {
         Coordinator(self)
@@ -68,13 +72,20 @@ struct DrawerPanGesture: UIViewRepresentable {
             hostWindow = nil
         }
 
+        /// 本次手势是否用于退出编辑器
+        private var editorMode = false
+
         @objc private func handle(_ g: UIPanGestureRecognizer) {
             let tx = g.translation(in: g.view).x
+            if g.state == .began {
+                editorMode = parent.editorOpen
+            }
             switch g.state {
             case .began, .changed:
-                parent.onChanged(tx)
+                if editorMode { parent.onEditorChanged(tx) } else { parent.onChanged(tx) }
             case .ended, .cancelled, .failed:
-                parent.onEnded(tx, g.velocity(in: g.view).x)
+                let vx = g.velocity(in: g.view).x
+                if editorMode { parent.onEditorEnded(tx, vx) } else { parent.onEnded(tx, vx) }
             default:
                 break
             }
@@ -96,6 +107,12 @@ struct DrawerPanGesture: UIViewRepresentable {
             let dy = abs(v.x) + abs(v.y) > 1 ? v.y : t.y
 
             let startX = pan.location(in: view).x - t.x
+
+            // 编辑器打开时：只接受从左边缘开始的右滑
+            if parent.editorOpen {
+                return startX <= 44 && dx > 0 && abs(dx) > abs(dy) * 0.7
+            }
+
             let nearEdge = !parent.isOpen && startX <= parent.edgeWidth
             // 水平分量占优即可（约 45°），左边缘附近更宽松（约 55°）
             guard abs(dx) > abs(dy) * (nearEdge ? 0.7 : 0.95) else { return false }
