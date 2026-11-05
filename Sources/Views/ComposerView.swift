@@ -92,182 +92,230 @@ struct ComposerView: View {
     }
 
     var body: some View {
+        withDialogs(withHandlers(content))
+    }
+
+    /// 页面主体
+    private var content: some View {
         VStack(spacing: 0) {
             topBar
-
-            editor
-                .overlay(alignment: .top) {
-                    // 平时隐藏，下拉编辑区时渐显
-                    Text(dateLine)
-                        .font(.footnote)
-                        .monospacedDigit()
-                        .foregroundStyle(.secondary)
-                        .opacity(min(1, max(0, (pullDistance - 8) / 32)))
-                        .offset(y: min(pullDistance, 60) / 2 - 6)
-                        .allowsHitTesting(false)
-                        .accessibilityIdentifier("composerDate")
-                }
-                .padding(.top, 4)
-
-
-            let tags = suggestions
-            if !tags.isEmpty {
-                ScrollView(.horizontal, showsIndicators: false) {
-                    HStack(spacing: 8) {
-                        ForEach(tags, id: \.self) { tag in
-                            Button("#" + tag) { apply(tag) }
-                                .font(.subheadline)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(accent.opacity(0.12), in: Capsule())
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.vertical, 6)
-                }
-            }
-
+            editorWithDate
+            suggestionBar
             toolbarRow
         }
         .background(Color(.systemBackground).ignoresSafeArea())
-        .onAppear(perform: load)
-        .onChange(of: text) { old, new in
-            recordHistory(old: old, new: new)
-            presenter?.dirty = hasChanges && canSave
-        }
-        .onChange(of: presenter?.backTrigger ?? 0) { _, _ in
-            attemptBack()
-        }
-        .onChange(of: pickerItems) { _, items in
-            guard !items.isEmpty else { return }
-            Task { @MainActor in
-                for item in items {
-                    guard imageCount < maxImages else { break }
-                    if let data = try? await item.loadTransferable(type: Data.self) {
-                        insertImage(ImageUtil.compress(data))
+    }
+
+    /// 编辑区 + 下拉才显示的时间
+    private var editorWithDate: some View {
+        editor
+            .overlay(alignment: .top) { dateOverlay }
+            .padding(.top, 4)
+    }
+
+    private var dateOpacity: Double {
+        Double(min(1, max(0, (pullDistance - 8) / 32)))
+    }
+
+    private var dateOverlay: some View {
+        Text(dateLine)
+            .font(.footnote)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .opacity(dateOpacity)
+            .offset(y: min(pullDistance, 60) / 2 - 6)
+            .allowsHitTesting(false)
+            .accessibilityIdentifier("composerDate")
+    }
+
+    /// 输入 # 时的标签联想
+    @ViewBuilder
+    private var suggestionBar: some View {
+        let tags = suggestions
+        if !tags.isEmpty {
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(tags, id: \.self) { tag in
+                        Button("#" + tag) { apply(tag) }
+                            .font(.subheadline)
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 5)
+                            .background(accent.opacity(0.12), in: Capsule())
                     }
                 }
-                pickerItems = []
+                .padding(.horizontal, 16)
+                .padding(.vertical, 6)
             }
         }
-        .confirmationDialog("放弃这次修改？", isPresented: $confirmDiscard, titleVisibility: .visible) {
-            Button("放弃修改", role: .destructive) { dismiss() }
-            Button("保存") { save() }
-        }
-        .confirmationDialog("删除这条笔记？", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("删除", role: .destructive) {
-                memo?.trashedAt = Date()
-                try? context.save()
-                dismiss()
+    }
+
+    private func withHandlers<V: View>(_ view: V) -> some View {
+        view
+            .onAppear(perform: load)
+            .onChange(of: text) { old, new in
+                recordHistory(old: old, new: new)
+                presenter?.dirty = hasChanges && canSave
             }
-        } message: {
-            Text("笔记会移到回收站，30 天内可以恢复。")
-        }
-        .sheet(isPresented: $showHistory) {
-            if let memo {
-                ThemedRoot {
-                    RevisionHistoryView(memo: memo)
+            .onChange(of: presenter?.backTrigger ?? 0) { _, _ in
+                attemptBack()
+            }
+            .onChange(of: pickerItems) { _, items in
+                loadPicked(items)
+            }
+    }
+
+    private func withDialogs<V: View>(_ view: V) -> some View {
+        view
+            .confirmationDialog("放弃这次修改？", isPresented: $confirmDiscard, titleVisibility: .visible) {
+                Button("放弃修改", role: .destructive) { dismiss() }
+                Button("保存") { save() }
+            }
+            .confirmationDialog("删除这条笔记？", isPresented: $confirmDelete, titleVisibility: .visible) {
+                Button("删除", role: .destructive) { deleteMemo() }
+            } message: {
+                Text("笔记会移到回收站，30 天内可以恢复。")
+            }
+            .sheet(isPresented: $showHistory) {
+                if let memo {
+                    ThemedRoot {
+                        RevisionHistoryView(memo: memo)
+                    }
                 }
             }
+    }
+
+    private func loadPicked(_ items: [PhotosPickerItem]) {
+        guard !items.isEmpty else { return }
+        Task { @MainActor in
+            for item in items {
+                guard imageCount < maxImages else { break }
+                if let data = try? await item.loadTransferable(type: Data.self) {
+                    insertImage(ImageUtil.compress(data))
+                }
+            }
+            pickerItems = []
         }
+    }
+
+    private func deleteMemo() {
+        memo?.trashedAt = Date()
+        try? context.save()
+        dismiss()
     }
 
     // MARK: - 顶栏（仿系统备忘录）
 
     private var topBar: some View {
         HStack(spacing: 10) {
-            Button(action: attemptBack) {
-                Image(systemName: "chevron.left")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .frame(width: 46, height: 46)
-                    .background(roundBackground(Circle()))
-            }
-            .accessibilityIdentifier("composerBack")
-            .accessibilityLabel("返回")
-
+            backButton
             Spacer()
-
             if !undoStack.isEmpty || !redoStack.isEmpty {
-                HStack(spacing: 0) {
-                    Button(action: undo) {
-                        Image(systemName: "arrow.uturn.backward")
-                            .frame(width: 44, height: 46)
-                    }
-                    .disabled(undoStack.isEmpty)
-                    .accessibilityIdentifier("undoButton")
-                    .accessibilityLabel("撤销")
-
-                    Button(action: redo) {
-                        Image(systemName: "arrow.uturn.forward")
-                            .frame(width: 44, height: 46)
-                    }
-                    .disabled(redoStack.isEmpty)
-                    .accessibilityIdentifier("redoButton")
-                    .accessibilityLabel("重做")
-                }
-                .font(.title3)
-                .foregroundStyle(.primary)
-                .padding(.horizontal, 4)
-                .background(roundBackground(Capsule()))
-                .transition(.scale.combined(with: .opacity))
+                undoRedoCapsule
+                    .transition(.scale.combined(with: .opacity))
             }
-
-            HStack(spacing: 0) {
-                ShareLink(item: RichContent.plainText(text)) {
-                    Image(systemName: "square.and.arrow.up")
-                        .frame(width: 48, height: 46)
-                }
-                .disabled(text.isEmpty)
-
-                Menu {
-                    Button {
-                        UIPasteboard.general.string = RichContent.plainText(text)
-                        Haptics.light()
-                    } label: {
-                        Label("复制全文", systemImage: "doc.on.doc")
-                    }
-                    if let memo, memo.revisionCount > 0 {
-                        Button {
-                            showHistory = true
-                        } label: {
-                            Label("历史版本（\(memo.revisionCount)）", systemImage: "clock.arrow.circlepath")
-                        }
-                    }
-                    if memo != nil {
-                        Divider()
-                        Button(role: .destructive) {
-                            confirmDelete = true
-                        } label: {
-                            Label("删除", systemImage: "trash")
-                        }
-                    }
-                } label: {
-                    Image(systemName: "ellipsis")
-                        .frame(width: 48, height: 46)
-                        .contentShape(Rectangle())
-                }
-                .accessibilityIdentifier("composerMore")
-            }
-            .font(.title3)
-            .foregroundStyle(.primary)
-            .padding(.horizontal, 4)
-            .background(roundBackground(Capsule()))
-
-            Button(action: save) {
-                Image(systemName: "checkmark")
-                    .font(.title3.weight(.semibold))
-                    .foregroundStyle(.white)
-                    .frame(width: 46, height: 46)
-                    .background(Circle().fill(canSave ? accent : Color.gray.opacity(0.35)))
-                    .shadow(color: canSave ? accent.opacity(0.35) : .clear, radius: 6, y: 2)
-            }
-            .disabled(!canSave)
-            .accessibilityIdentifier("sendMemo")
-            .accessibilityLabel("完成")
+            actionsCapsule
+            doneButton
         }
         .padding(.horizontal, 16)
         .padding(.top, 8)
+    }
+
+    private var backButton: some View {
+        Button(action: attemptBack) {
+            Image(systemName: "chevron.left")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.primary)
+                .frame(width: 46, height: 46)
+                .background(roundBackground(Circle()))
+        }
+        .accessibilityIdentifier("composerBack")
+        .accessibilityLabel("返回")
+    }
+
+    private var undoRedoCapsule: some View {
+        HStack(spacing: 0) {
+            Button(action: undo) {
+                Image(systemName: "arrow.uturn.backward")
+                    .frame(width: 44, height: 46)
+            }
+            .disabled(undoStack.isEmpty)
+            .accessibilityIdentifier("undoButton")
+            .accessibilityLabel("撤销")
+
+            Button(action: redo) {
+                Image(systemName: "arrow.uturn.forward")
+                    .frame(width: 44, height: 46)
+            }
+            .disabled(redoStack.isEmpty)
+            .accessibilityIdentifier("redoButton")
+            .accessibilityLabel("重做")
+        }
+        .font(.title3)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 4)
+        .background(roundBackground(Capsule()))
+    }
+
+    private var actionsCapsule: some View {
+        HStack(spacing: 0) {
+            ShareLink(item: RichContent.plainText(text)) {
+                Image(systemName: "square.and.arrow.up")
+                    .frame(width: 48, height: 46)
+            }
+            .disabled(text.isEmpty)
+
+            Menu {
+                moreMenuItems
+            } label: {
+                Image(systemName: "ellipsis")
+                    .frame(width: 48, height: 46)
+                    .contentShape(Rectangle())
+            }
+            .accessibilityIdentifier("composerMore")
+        }
+        .font(.title3)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 4)
+        .background(roundBackground(Capsule()))
+    }
+
+    @ViewBuilder
+    private var moreMenuItems: some View {
+        Button {
+            UIPasteboard.general.string = RichContent.plainText(text)
+            Haptics.light()
+        } label: {
+            Label("复制全文", systemImage: "doc.on.doc")
+        }
+        if let memo, memo.revisionCount > 0 {
+            Button {
+                showHistory = true
+            } label: {
+                Label("历史版本（\(memo.revisionCount)）", systemImage: "clock.arrow.circlepath")
+            }
+        }
+        if memo != nil {
+            Divider()
+            Button(role: .destructive) {
+                confirmDelete = true
+            } label: {
+                Label("删除", systemImage: "trash")
+            }
+        }
+    }
+
+    private var doneButton: some View {
+        Button(action: save) {
+            Image(systemName: "checkmark")
+                .font(.title3.weight(.semibold))
+                .foregroundStyle(.white)
+                .frame(width: 46, height: 46)
+                .background(Circle().fill(canSave ? accent : Color.gray.opacity(0.35)))
+                .shadow(color: canSave ? accent.opacity(0.35) : .clear, radius: 6, y: 2)
+        }
+        .disabled(!canSave)
+        .accessibilityIdentifier("sendMemo")
+        .accessibilityLabel("完成")
     }
 
     /// 白底 + 细边 + 柔和阴影的圆形/胶囊按钮背景
