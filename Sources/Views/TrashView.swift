@@ -19,7 +19,7 @@ struct TrashView: View {
                             .font(.caption)
                             .monospacedDigit()
                             .foregroundStyle(.secondary)
-                        Text(memo.content.isEmpty ? "[图片]" : memo.content)
+                        Text(memo.plainText.isEmpty ? "[图片]" : RichContent.displayText(memo.content))
                             .lineLimit(4)
                     }
                     .padding(.vertical, 4)

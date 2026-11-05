@@ -224,4 +224,28 @@ final class DrawerUITests: XCTestCase {
         let leaked = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "不想保存的内容")).firstMatch
         XCTAssertFalse(leaked.waitForExistence(timeout: 1.5), "放弃后不应保存")
     }
+
+    // MARK: - 图文混排
+
+    func testInlineImageAtCursor() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        editor.tap()
+        editor.typeText("图片前面的文字")
+        tapCenter(app.buttons["debugInsertImage"])
+        editor.typeText("图片后面的文字")
+        snapshot("composer-inline-image")
+        tapCenter(app.buttons["sendMemo"])
+
+        let before = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "图片前面的文字")).firstMatch
+        let after = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "图片后面的文字")).firstMatch
+        let image = app.images["inlineImage"].firstMatch
+        XCTAssertTrue(before.waitForExistence(timeout: 3), "应显示图片前的文字")
+        XCTAssertTrue(image.waitForExistence(timeout: 3), "卡片中应显示插入的图片")
+        XCTAssertTrue(after.exists, "应显示图片后的文字")
+        XCTAssertLessThan(before.frame.minY, image.frame.minY, "图片应在前面文字的下方")
+        XCTAssertLessThan(image.frame.minY, after.frame.minY, "后面的文字应在图片下方")
+        snapshot("card-inline-image")
+    }
 }

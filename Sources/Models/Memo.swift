@@ -42,6 +42,19 @@ final class Memo {
         revisions?.append(rev)
     }
 
+    /// 去掉图片标记的纯文字
+    var plainText: String { RichContent.plainText(content) }
+
+    /// 正文没有引用到的图片（旧版本笔记的图片），显示在末尾
+    var unplacedImages: [MemoImage] {
+        let keys = Set(RichContent.referencedKeys(content))
+        return sortedImages.filter { $0.key.isEmpty || !keys.contains($0.key) }
+    }
+
+    func imageData(forKey key: String) -> Data? {
+        images?.first(where: { $0.key == key })?.data
+    }
+
     var sortedImages: [MemoImage] {
         (images ?? []).sorted { $0.order < $1.order }
     }
@@ -71,11 +84,14 @@ final class MemoRevision {
 final class MemoImage {
     @Attribute(.externalStorage) var data: Data = Data()
     var order: Int = 0
+    /// 对应正文中的 [[img:key]] 标记；旧版本的图片为空字符串
+    var key: String = ""
     var memo: Memo?
 
-    init(data: Data, order: Int) {
+    init(data: Data, order: Int, key: String = "") {
         self.data = data
         self.order = order
+        self.key = key
     }
 }
 

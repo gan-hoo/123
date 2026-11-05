@@ -15,7 +15,7 @@ struct SidebarView: View {
     /// 所有笔记的字数（不计空白字符）
     private var wordCount: Int {
         memos.reduce(0) { sum, memo in
-            sum + memo.content.reduce(0) { $1.isWhitespace ? $0 : $0 + 1 }
+            sum + memo.plainText.reduce(0) { $1.isWhitespace ? $0 : $0 + 1 }
         }
     }
 

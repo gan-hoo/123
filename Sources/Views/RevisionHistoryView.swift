@@ -71,7 +71,7 @@ struct RevisionHistoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            Text(item.content.isEmpty ? "（空）" : item.content)
+            Text(item.content.isEmpty ? "（空）" : RichContent.displayText(item.content))
                 .font(.subheadline)
                 .lineLimit(3)
         }
@@ -120,9 +120,9 @@ struct RevisionDetailView: View {
                     Text("这个版本 → \(newer.revision == nil ? "当前版本" : Fmt.full.string(from: newer.date)) 的改动")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-                    DiffView(old: item.content, new: newer.content)
+                    DiffView(old: RichContent.displayText(item.content), new: RichContent.displayText(newer.content))
                 } else {
-                    Text(TagParser.attributed(item.content, accent: accent))
+                    Text(TagParser.attributed(RichContent.displayText(item.content), accent: accent))
                         .lineSpacing(4)
                         .textSelection(.enabled)
                         .frame(maxWidth: .infinity, alignment: .leading)

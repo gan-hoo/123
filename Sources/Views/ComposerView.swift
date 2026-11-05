@@ -14,7 +14,9 @@ struct ComposerView: View {
     private var allMemos: [Memo]
 
     @State private var text = ""
-    @State private var images: [Data] = []
+    /// 图片 key → 图片数据；正文中用 [[img:key]] 标记位置
+    @State private var images: [String: Data] = [:]
+    @State private var controller = EditorController()
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var loaded = false
     @State private var focusRequest = false
@@ -23,12 +25,13 @@ struct ComposerView: View {
     @State private var confirmDelete = false
     /// 进入编辑器时的原始内容，用于判断是否有未保存的修改
     @State private var originalText = ""
-    @State private var originalImages: [Data] = []
 
-    private let maxImages = 9
+    private let maxImages = 30
+
+    private var imageCount: Int { RichContent.referencedKeys(text).count }
 
     private var hasChanges: Bool {
-        text != originalText || images != originalImages
+        text != originalText
     }
 
     private var dateLine: String {
@@ -39,7 +42,7 @@ struct ComposerView: View {
     }
 
     private var canSave: Bool {
-        !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !images.isEmpty
+        !RichContent.plainText(text).isEmpty || imageCount > 0
     }
 
     /// 光标默认在末尾：正在输入的 `#xxx`
@@ -74,9 +77,6 @@ struct ComposerView: View {
 
             editor
 
-            if !images.isEmpty {
-                imageStrip
-            }
 
             let tags = suggestions
             if !tags.isEmpty {
@@ -103,9 +103,9 @@ struct ComposerView: View {
             guard !items.isEmpty else { return }
             Task { @MainActor in
                 for item in items {
-                    guard images.count < maxImages else { break }
+                    guard imageCount < maxImages else { break }
                     if let data = try? await item.loadTransferable(type: Data.self) {
-                        images.append(ImageUtil.compress(data))
+                        insertImage(ImageUtil.compress(data))
                     }
                 }
                 pickerItems = []
@@ -156,7 +156,7 @@ struct ComposerView: View {
             Spacer()
 
             HStack(spacing: 0) {
-                ShareLink(item: text) {
+                ShareLink(item: RichContent.plainText(text)) {
                     Image(systemName: "square.and.arrow.up")
                         .frame(width: 48, height: 46)
                 }
@@ -164,7 +164,7 @@ struct ComposerView: View {
 
                 Menu {
                     Button {
-                        UIPasteboard.general.string = text
+                        UIPasteboard.general.string = RichContent.plainText(text)
                         Haptics.light()
                     } label: {
                         Label("复制全文", systemImage: "doc.on.doc")
@@ -222,7 +222,8 @@ struct ComposerView: View {
 
     private var editor: some View {
         ZStack(alignment: .topLeading) {
-            TagTextEditor(text: $text, focusRequest: $focusRequest, accent: accent)
+            TagTextEditor(text: $text, images: images, focusRequest: $focusRequest,
+                          accent: accent, controller: controller)
             if text.isEmpty {
                 Text("现在的想法是…")
                     .font(.body)
@@ -235,37 +236,6 @@ struct ComposerView: View {
         .frame(maxHeight: .infinity)
     }
 
-    private var imageStrip: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 8) {
-                ForEach(Array(images.enumerated()), id: \.offset) { index, data in
-                    ZStack(alignment: .topTrailing) {
-                        Group {
-                            if let ui = UIImage(data: data) {
-                                Image(uiImage: ui).resizable().scaledToFill()
-                            } else {
-                                Color(.tertiarySystemFill)
-                            }
-                        }
-                        .frame(width: 64, height: 64)
-                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
-
-                        Button {
-                            withAnimation { _ = images.remove(at: index) }
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .symbolRenderingMode(.palette)
-                                .foregroundStyle(.white, .black.opacity(0.6))
-                        }
-                        .offset(x: 6, y: -6)
-                    }
-                }
-            }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 10)
-        }
-    }
-
     /// 键盘上方的悬浮工具条
     private var toolbarRow: some View {
         HStack(spacing: 0) {
@@ -275,12 +245,12 @@ struct ComposerView: View {
             }
             .accessibilityIdentifier("insertTag")
             PhotosPicker(selection: $pickerItems,
-                         maxSelectionCount: max(1, maxImages - images.count),
+                         maxSelectionCount: max(1, min(9, maxImages - imageCount)),
                          matching: .images) {
                 Image(systemName: "photo")
                     .frame(maxWidth: .infinity, minHeight: 46)
             }
-            .disabled(images.count >= maxImages)
+            .disabled(imageCount >= maxImages)
             Button { insertList() } label: {
                 Image(systemName: "list.bullet")
                     .frame(maxWidth: .infinity, minHeight: 46)
@@ -293,6 +263,13 @@ struct ComposerView: View {
                     .frame(maxWidth: .infinity, minHeight: 46)
             }
             .accessibilityLabel("收起键盘")
+            if CloudSync.isUITesting {
+                Button { insertSampleImage() } label: {
+                    Image(systemName: "ladybug")
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                }
+                .accessibilityIdentifier("debugInsertImage")
+            }
         }
         .font(.title3)
         .foregroundStyle(.primary)
@@ -308,15 +285,50 @@ struct ComposerView: View {
         guard !loaded else { return }
         loaded = true
         if let memo {
-            text = memo.content
-            images = memo.sortedImages.map(\.data)
+            var content = memo.content
+            var dict: [String: Data] = [:]
+            let placed = Set(RichContent.referencedKeys(content))
+            for img in memo.sortedImages {
+                // 旧版本的图片没有 key 或不在正文中：补上标记，放到末尾
+                let key = (img.key.isEmpty || !placed.contains(img.key)) ? UUID().uuidString : img.key
+                dict[key] = img.data
+                if !placed.contains(key) {
+                    content += (content.isEmpty ? "" : "\n") + RichContent.marker(key) + "\n"
+                }
+            }
+            images = dict
+            text = content
         } else if let presetTag {
             text = "#\(presetTag) "
         }
         originalText = text
-        originalImages = images
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             focusRequest = true
+        }
+    }
+
+    /// 在光标处插入图片
+    private func insertImage(_ data: Data) {
+        let key = UUID().uuidString
+        images[key] = data
+        if !controller.insertImage(key: key, data: data) {
+            // 编辑器还没准备好时，放到末尾
+            if !text.isEmpty && !text.hasSuffix("\n") { text += "\n" }
+            text += RichContent.marker(key) + "\n"
+        }
+    }
+
+    /// 生成一张测试用图片（仅 UI 自动化测试使用）
+    private func insertSampleImage() {
+        let size = CGSize(width: 600, height: 400)
+        let img = UIGraphicsImageRenderer(size: size).image { ctx in
+            UIColor.systemTeal.setFill()
+            ctx.fill(CGRect(origin: .zero, size: size))
+            UIColor.white.setFill()
+            ctx.fill(CGRect(x: 200, y: 120, width: 200, height: 160))
+        }
+        if let data = img.jpegData(compressionQuality: 0.8) {
+            insertImage(data)
         }
     }
 
@@ -343,11 +355,13 @@ struct ComposerView: View {
     private func save() {
         guard canSave else { return }
         let content = text.trimmingCharacters(in: .whitespacesAndNewlines)
+        // 只保留正文中还在的图片（删掉的图片随之丢弃）
+        let keys = RichContent.referencedKeys(content)
+        let newData = keys.compactMap { images[$0] }
         let target: Memo
         if let memo {
             target = memo
-            let oldImages = memo.sortedImages.map(\.data)
-            if memo.content != content || oldImages != images {
+            if memo.content != content || memo.sortedImages.map(\.data) != newData {
                 memo.snapshot(in: context)
             }
             target.content = content
@@ -361,8 +375,9 @@ struct ComposerView: View {
             context.insert(target)
         }
         var newImages: [MemoImage] = []
-        for (i, data) in images.enumerated() {
-            let img = MemoImage(data: data, order: i)
+        for (i, key) in keys.enumerated() {
+            guard let data = images[key] else { continue }
+            let img = MemoImage(data: data, order: i, key: key)
             context.insert(img)
             newImages.append(img)
         }

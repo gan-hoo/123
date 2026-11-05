@@ -18,7 +18,7 @@ struct MemoListView: View {
         let q = search.trimmingCharacters(in: .whitespacesAndNewlines)
         return memos
             .filter { filter.matches($0) }
-            .filter { q.isEmpty || $0.content.localizedCaseInsensitiveContains(q) }
+            .filter { q.isEmpty || $0.plainText.localizedCaseInsensitiveContains(q) }
             .sorted { a, b in
                 if a.isPinned != b.isPinned { return a.isPinned }
                 return a.createdAt > b.createdAt

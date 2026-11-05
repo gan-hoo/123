@@ -13,39 +13,82 @@ struct MemoCard: View {
     @State private var preview: PreviewImage?
     @State private var showHistory = false
 
+    private var segments: [RichContent.Segment] { RichContent.segments(memo.content) }
+
     private var isLong: Bool {
-        memo.content.count > 280 || memo.content.split(separator: "\n", omittingEmptySubsequences: false).count > 10
+        let plain = memo.plainText
+        let imageCount = segments.filter { if case .image = $0 { return true } else { return false } }.count
+        return plain.count > 280
+            || plain.split(separator: "\n", omittingEmptySubsequences: false).count > 10
+            || imageCount > 1
+    }
+
+    /// 折叠时只显示前面一部分（约 280 字，最多 1 张图）
+    private var visibleSegments: [RichContent.Segment] {
+        let all = segments
+        guard isLong, !(alwaysExpanded || expanded) else { return all }
+        var out: [RichContent.Segment] = []
+        var chars = 0
+        var imgs = 0
+        for seg in all {
+            switch seg {
+            case .text(let t, _):
+                out.append(seg)
+                chars += t.count
+            case .image:
+                if imgs >= 1 { return out }
+                out.append(seg)
+                imgs += 1
+            }
+            if chars > 280 { break }
+        }
+        return out
     }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 10) {
             header
 
-            if !memo.content.isEmpty {
-                Text(TagParser.attributed(memo.content, accent: accent))
-                    .font(.body)
-                    .lineSpacing(4)
-                    .lineLimit(alwaysExpanded || expanded ? nil : 10)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .environment(\.openURL, OpenURLAction { url in
-                        if let name = TagParser.tagName(from: url) {
-                            onTagTap(name)
-                            return .handled
-                        }
-                        return .systemAction
-                    })
-
-                if isLong && !alwaysExpanded {
-                    Button(expanded ? "收起" : "展开") {
-                        withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+            ForEach(visibleSegments) { seg in
+                switch seg {
+                case .text(let t, _):
+                    Text(TagParser.attributed(t, accent: accent))
+                        .font(.body)
+                        .lineSpacing(4)
+                        .lineLimit(alwaysExpanded || expanded ? nil : 10)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .environment(\.openURL, OpenURLAction { url in
+                            if let name = TagParser.tagName(from: url) {
+                                onTagTap(name)
+                                return .handled
+                            }
+                            return .systemAction
+                        })
+                case .image(let key, _):
+                    if let data = memo.imageData(forKey: key), let ui = UIImage(data: data) {
+                        Image(uiImage: ui)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(maxWidth: .infinity, maxHeight: 360, alignment: .leading)
+                            .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                            .contentShape(Rectangle())
+                            .onTapGesture { preview = PreviewImage(data: data) }
+                            .accessibilityIdentifier("inlineImage")
                     }
-                    .font(.footnote)
                 }
             }
 
-            let imgs = memo.sortedImages
-            if !imgs.isEmpty {
-                ImageGrid(images: imgs) { data in
+            if isLong && !alwaysExpanded {
+                Button(expanded ? "收起" : "展开") {
+                    withAnimation(.easeInOut(duration: 0.2)) { expanded.toggle() }
+                }
+                .font(.footnote)
+            }
+
+            // 旧版本笔记中未放进正文的图片
+            let extra = memo.unplacedImages
+            if !extra.isEmpty {
+                ImageGrid(images: extra) { data in
                     preview = PreviewImage(data: data)
                 }
             }
@@ -111,12 +154,12 @@ struct MemoCard: View {
             }
         }
         Button {
-            UIPasteboard.general.string = memo.content
+            UIPasteboard.general.string = memo.plainText
             Haptics.light()
         } label: {
             Label("复制", systemImage: "doc.on.doc")
         }
-        ShareLink(item: memo.content) {
+        ShareLink(item: memo.plainText) {
             Label("分享", systemImage: "square.and.arrow.up")
         }
         Divider()

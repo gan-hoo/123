@@ -9,6 +9,7 @@ struct BackupMemo: Codable {
     var isPinned: Bool
     var trashedAt: Date?
     var images: [Data]
+    var imageKeys: [String]?
     var revisions: [BackupRevision]?
 }
 
@@ -59,6 +60,7 @@ enum Backup {
                        isPinned: $0.isPinned,
                        trashedAt: $0.trashedAt,
                        images: $0.sortedImages.map(\.data),
+                       imageKeys: $0.sortedImages.map(\.key),
                        revisions: $0.sortedRevisions.map { r in
                            BackupRevision(content: r.content, savedAt: r.savedAt, imageCount: r.imageCount)
                        })
@@ -96,7 +98,8 @@ enum Backup {
             context.insert(memo)
             var imgs: [MemoImage] = []
             for (i, d) in item.images.enumerated() {
-                let img = MemoImage(data: d, order: i)
+                let k = (item.imageKeys ?? []).indices.contains(i) ? item.imageKeys![i] : ""
+                let img = MemoImage(data: d, order: i, key: k)
                 context.insert(img)
                 imgs.append(img)
             }

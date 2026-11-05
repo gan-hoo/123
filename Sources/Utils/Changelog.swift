@@ -12,6 +12,17 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "2.0.0", date: "2026-11-05", title: "图文混排",
+            items: [
+                "添加的图片直接插入到光标位置，可以在图片前后继续写字",
+                "在编辑器里用删除键可以删掉图片",
+                "笔记卡片按实际顺序显示文字和图片，点击图片可全屏查看",
+                "每条笔记最多 30 张图片",
+                "旧笔记的图片保留在末尾，重新编辑时可以移动位置",
+                "字数统计、搜索、复制和分享都不包含图片",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.9.1", date: "2026-11-05", title: "新建笔记全屏",
             items: [
                 "点右下角 ＋ 新建笔记也改为全屏，和编辑笔记一致",
