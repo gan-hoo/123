@@ -105,11 +105,10 @@ struct MemoListView: View {
                 }
             }
         }
-        .sheet(isPresented: $showComposer) {
+        .fullScreenCover(isPresented: $showComposer) {
             ThemedRoot {
                 ComposerView(memo: nil, presetTag: presetTag)
             }
-            .presentationDetents([.medium, .large])
         }
         .fullScreenCover(item: $editing) { memo in
             ThemedRoot {
