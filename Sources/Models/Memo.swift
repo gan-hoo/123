@@ -3,6 +3,8 @@ import SwiftData
 
 @Model
 final class Memo {
+    /// 标题（可选）
+    var title: String = ""
     var content: String = ""
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
@@ -36,6 +38,7 @@ final class Memo {
     /// 把当前内容存为一个历史版本
     func snapshot(in context: ModelContext) {
         let rev = MemoRevision(content: content, savedAt: updatedAt, imageCount: images?.count ?? 0)
+        rev.title = title
         context.insert(rev)
         rev.memo = self
         if revisions == nil { revisions = [] }
@@ -44,6 +47,12 @@ final class Memo {
 
     /// 去掉图片标记的纯文字
     var plainText: String { RichContent.plainText(content) }
+
+    /// 标题 + 正文纯文字（用于搜索、复制、分享）
+    var fullText: String {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        return t.isEmpty ? plainText : t + "\n" + plainText
+    }
 
     /// 正文没有引用到的图片（旧版本笔记的图片），显示在末尾
     var unplacedImages: [MemoImage] {
@@ -67,6 +76,7 @@ final class Memo {
 
 @Model
 final class MemoRevision {
+    var title: String = ""
     var content: String = ""
     /// 这个版本最后保存的时间
     var savedAt: Date = Date()

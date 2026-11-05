@@ -9,11 +9,11 @@ struct RevisionHistoryView: View {
 
     /// 版本列表：当前版本在最前，之后是历史版本（新 → 旧）
     private var versions: [VersionItem] {
-        var items = [VersionItem(id: "current", content: memo.content, date: memo.updatedAt,
+        var items = [VersionItem(id: "current", title: memo.title, content: memo.content, date: memo.updatedAt,
                                  imageCount: memo.images?.count ?? 0, revision: nil)]
         for rev in memo.sortedRevisions {
             items.append(VersionItem(id: "\(rev.persistentModelID.hashValue)-\(rev.savedAt.timeIntervalSince1970)",
-                                     content: rev.content, date: rev.savedAt,
+                                     title: rev.title, content: rev.content, date: rev.savedAt,
                                      imageCount: rev.imageCount, revision: rev))
         }
         return items
@@ -71,6 +71,9 @@ struct RevisionHistoryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+            if !item.title.isEmpty {
+                Text(item.title).font(.subheadline.weight(.semibold))
+            }
             Text(item.content.isEmpty ? "（空）" : RichContent.displayText(item.content))
                 .font(.subheadline)
                 .lineLimit(3)
@@ -81,6 +84,7 @@ struct RevisionHistoryView: View {
 
 struct VersionItem: Identifiable {
     let id: String
+    let title: String
     let content: String
     let date: Date
     let imageCount: Int
@@ -149,8 +153,9 @@ struct RevisionDetailView: View {
     }
 
     private func restore() {
-        guard item.content != memo.content else { onRestored(); return }
+        guard item.content != memo.content || item.title != memo.title else { onRestored(); return }
         memo.snapshot(in: context)
+        memo.title = item.title
         memo.content = item.content
         memo.updatedAt = Date()
         try? context.save()

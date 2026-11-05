@@ -27,7 +27,7 @@ struct TagTextEditor: UIViewRepresentable {
     @Binding var focusRequest: Bool
     var accent: Color
     var controller: EditorController?
-    /// 顶部下拉距离（用于下拉显示时间）
+    /// 顶部下拉距离（正数）/ 往上滑动距离（负数），用于显示 / 隐藏时间
     var onPull: ((CGFloat) -> Void)?
 
     static let insets = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
@@ -218,9 +218,10 @@ struct TagTextEditor: UIViewRepresentable {
         }
 
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            let pull = max(0, -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top))
+            // 正数：在顶部往下拉的距离；负数：往上滑动的距离
+            let pull = -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top)
             // 只在变化明显时通知，避免频繁刷新
-            if abs(pull - lastPull) > 1 || (pull == 0 && lastPull != 0) {
+            if abs(pull - lastPull) > 1 {
                 lastPull = pull
                 parent.onPull?(pull)
             }

@@ -70,6 +70,7 @@ enum Exporter {
         var out = "# Jin Notes 笔记导出\n\n导出时间：\(Fmt.full.string(from: Date()))\n共 \(memos.count) 条\n\n"
         for memo in memos.sorted(by: { $0.createdAt > $1.createdAt }) {
             out += "## \(Fmt.full.string(from: memo.createdAt))\n\n"
+            if !memo.title.isEmpty { out += "### \(memo.title)\n\n" }
             out += RichContent.displayText(memo.content)
             let n = memo.unplacedImages.count
             if n > 0 { out += "\n\n_(\(n) 张图片)_" }

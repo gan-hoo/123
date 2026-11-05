@@ -262,7 +262,15 @@ final class DrawerUITests: XCTestCase {
         let start = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
         let end = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))
         start.press(forDuration: 0.05, thenDragTo: end, withVelocity: .slow, thenHoldForDuration: 1.0)
+        let date = app.staticTexts["composerDate"]
+        XCTAssertTrue(date.waitForExistence(timeout: 2), "下拉后时间应固定显示")
         snapshot("composer-date-pulled")
+        // 往上滑隐藏
+        let up1 = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.6))
+        let up2 = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.2))
+        up1.press(forDuration: 0.05, thenDragTo: up2, withVelocity: .slow, thenHoldForDuration: 0.3)
+        sleep(1)
+        XCTAssertFalse(date.exists, "往上滑后时间应隐藏")
     }
 
     // MARK: - 撤销 / 重做
@@ -320,5 +328,21 @@ final class DrawerUITests: XCTestCase {
         let deadline = Date().addingTimeInterval(3)
         while editor.exists && Date() < deadline { RunLoop.current.run(until: Date().addingTimeInterval(0.1)) }
         XCTAssertFalse(editor.exists, "放弃后应退出编辑器")
+    }
+
+    // MARK: - 标题
+
+    func testTitleShowsOnCard() {
+        tapCenter(app.buttons["newMemo"])
+        let titleField = app.textFields["titleField"]
+        XCTAssertTrue(titleField.waitForExistence(timeout: 3), "编辑器应有标题输入框")
+        titleField.tap()
+        titleField.typeText("我的标题")
+        let editor = app.textViews.firstMatch
+        editor.tap()
+        editor.typeText("正文内容")
+        tapCenter(app.buttons["sendMemo"])
+        XCTAssertTrue(app.staticTexts["我的标题"].waitForExistence(timeout: 3), "卡片上应显示标题")
+        snapshot("card-with-title")
     }
 }

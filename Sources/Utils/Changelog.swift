@@ -12,6 +12,16 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "2.1.0", date: "2026-11-05", title: "标题与新图标",
+            items: [
+                "编辑器新增「标题」，卡片上以粗体显示，搜索和字数统计包含标题",
+                "正文提示改为「开始记录…」",
+                "下拉显示时间后固定显示，往上滑再隐藏",
+                "键盘收起时，底部工具条更贴近屏幕底部",
+                "全新 App 图标",
+            ]
+        ),
+        ChangelogEntry(
             version: "2.0.0", date: "2026-11-05", title: "图文混排",
             items: [
                 "添加的图片直接插入到光标位置，可以在图片前后继续写字",

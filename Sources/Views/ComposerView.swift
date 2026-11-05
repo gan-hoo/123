@@ -37,6 +37,12 @@ struct ComposerView: View {
     @State private var controller = EditorController()
     /// 编辑区顶部下拉的距离，下拉时才显示时间
     @State private var pullDistance: CGFloat = 0
+    /// 下拉后固定显示时间，往上滑再隐藏
+    @State private var showDate = false
+    @State private var title = ""
+    @State private var originalTitle = ""
+    @State private var keyboardVisible = false
+    @FocusState private var titleFocused: Bool
 
     // 撤销 / 重做
     @State private var undoStack: [String] = []
@@ -58,7 +64,7 @@ struct ComposerView: View {
     private var imageCount: Int { RichContent.referencedKeys(text).count }
 
     private var hasChanges: Bool {
-        text != originalText
+        text != originalText || title != originalTitle
     }
 
     private var dateLine: String {
@@ -68,8 +74,16 @@ struct ComposerView: View {
         return f.string(from: memo?.updatedAt ?? Date())
     }
 
+    /// 标题 + 正文纯文字
+    private var shareText: String {
+        let t = title.trimmingCharacters(in: .whitespacesAndNewlines)
+        let body = RichContent.plainText(text)
+        return t.isEmpty ? body : t + "\n" + body
+    }
+
     private var canSave: Bool {
         !RichContent.plainText(text).isEmpty || imageCount > 0
+            || !title.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
 
     /// 光标默认在末尾：正在输入的 `#xxx`
@@ -99,33 +113,77 @@ struct ComposerView: View {
     private var content: some View {
         VStack(spacing: 0) {
             topBar
+            if showDate {
+                dateRow
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+            titleField
             editorWithDate
             suggestionBar
             toolbarRow
         }
         .background(Color(.systemBackground).ignoresSafeArea())
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillShowNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.2)) { keyboardVisible = true }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIResponder.keyboardWillHideNotification)) { _ in
+            withAnimation(.easeOut(duration: 0.2)) { keyboardVisible = false }
+        }
     }
 
     /// 编辑区 + 下拉才显示的时间
     private var editorWithDate: some View {
         editor
-            .overlay(alignment: .top) { dateOverlay }
-            .padding(.top, 4)
+            .overlay(alignment: .top) { pullHint }
     }
 
-    private var dateOpacity: Double {
-        Double(min(1, max(0, (pullDistance - 8) / 32)))
-    }
-
-    private var dateOverlay: some View {
+    /// 下拉过程中渐显的时间（松手后若已拉够距离，会固定显示在顶部）
+    private var pullHint: some View {
         Text(dateLine)
             .font(.footnote)
             .monospacedDigit()
             .foregroundStyle(.secondary)
-            .opacity(dateOpacity)
+            .opacity(showDate ? 0 : Double(min(1, max(0, (pullDistance - 8) / 32))))
             .offset(y: min(pullDistance, 60) / 2 - 6)
             .allowsHitTesting(false)
+    }
+
+    /// 固定显示的时间
+    private var dateRow: some View {
+        Text(dateLine)
+            .font(.footnote)
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .frame(maxWidth: .infinity)
+            .padding(.top, 8)
             .accessibilityIdentifier("composerDate")
+    }
+
+    /// 标题输入框 + 分隔线
+    private var titleField: some View {
+        VStack(spacing: 0) {
+            TextField("标题", text: $title)
+                .font(.title3.weight(.semibold))
+                .focused($titleFocused)
+                .submitLabel(.next)
+                .onSubmit { focusRequest = true }
+                .padding(.horizontal, TagTextEditor.insets.left)
+                .padding(.top, 14)
+                .padding(.bottom, 10)
+                .accessibilityIdentifier("titleField")
+            Divider()
+                .padding(.horizontal, TagTextEditor.insets.left)
+        }
+    }
+
+    /// 编辑区滚动：下拉超过一定距离固定显示时间，往上滑隐藏
+    private func handlePull(_ pull: CGFloat) {
+        pullDistance = max(0, pull)
+        if pull > 45 && !showDate {
+            withAnimation(.easeOut(duration: 0.2)) { showDate = true }
+        } else if pull < -12 && showDate {
+            withAnimation(.easeOut(duration: 0.2)) { showDate = false }
+        }
     }
 
     /// 输入 # 时的标签联想
@@ -258,7 +316,7 @@ struct ComposerView: View {
 
     private var actionsCapsule: some View {
         HStack(spacing: 0) {
-            ShareLink(item: RichContent.plainText(text)) {
+            ShareLink(item: shareText) {
                 Image(systemName: "square.and.arrow.up")
                     .frame(width: 48, height: 46)
             }
@@ -282,7 +340,7 @@ struct ComposerView: View {
     @ViewBuilder
     private var moreMenuItems: some View {
         Button {
-            UIPasteboard.general.string = RichContent.plainText(text)
+            UIPasteboard.general.string = shareText
             Haptics.light()
         } label: {
             Label("复制全文", systemImage: "doc.on.doc")
@@ -330,9 +388,9 @@ struct ComposerView: View {
         ZStack(alignment: .topLeading) {
             TagTextEditor(text: $text, images: images, focusRequest: $focusRequest,
                           accent: accent, controller: controller,
-                          onPull: { pullDistance = $0 })
+                          onPull: { handlePull($0) })
             if text.isEmpty {
-                Text("现在的想法是…")
+                Text("开始记录…")
                     .font(.body)
                     .foregroundStyle(.tertiary)
                     .padding(.leading, TagTextEditor.insets.left)
@@ -383,7 +441,9 @@ struct ComposerView: View {
         .padding(.horizontal, 8)
         .background(roundBackground(Capsule()))
         .padding(.horizontal, 12)
-        .padding(.vertical, 8)
+        .padding(.top, 8)
+        // 键盘收起时，工具条再往下贴近底部
+        .padding(.bottom, keyboardVisible ? 8 : -12)
     }
 
     // MARK: - Actions
@@ -405,10 +465,12 @@ struct ComposerView: View {
             }
             images = dict
             text = content
+            title = memo.title
         } else if let presetTag {
             text = "#\(presetTag) "
         }
         originalText = text
+        originalTitle = title
         // 载入完成后才开始记录撤销历史
         DispatchQueue.main.async { historyReady = true }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
@@ -512,7 +574,8 @@ struct ComposerView: View {
         let target: Memo
         if let memo {
             target = memo
-            if memo.content != content || memo.sortedImages.map(\.data) != newData {
+            let newTitle = title.trimmingCharacters(in: .whitespacesAndNewlines)
+            if memo.content != content || memo.title != newTitle || memo.sortedImages.map(\.data) != newData {
                 memo.snapshot(in: context)
             }
             target.content = content
@@ -533,6 +596,7 @@ struct ComposerView: View {
             newImages.append(img)
         }
         target.images = newImages
+        target.title = title.trimmingCharacters(in: .whitespacesAndNewlines)
         try? context.save()
         Haptics.success()
         dismiss()

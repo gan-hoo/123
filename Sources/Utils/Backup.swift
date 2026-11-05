@@ -3,6 +3,7 @@ import SwiftData
 import UniformTypeIdentifiers
 
 struct BackupMemo: Codable {
+    var title: String?
     var content: String
     var createdAt: Date
     var updatedAt: Date
@@ -54,7 +55,8 @@ enum Backup {
 
     static func makeDocument(_ memos: [Memo]) throws -> BackupDocument {
         let file = BackupFile(memos: memos.map {
-            BackupMemo(content: $0.content,
+            BackupMemo(title: $0.title,
+                       content: $0.content,
                        createdAt: $0.createdAt,
                        updatedAt: $0.updatedAt,
                        isPinned: $0.isPinned,
@@ -93,6 +95,7 @@ enum Backup {
 
             let memo = Memo(content: item.content, createdAt: item.createdAt)
             memo.updatedAt = item.updatedAt
+            memo.title = item.title ?? ""
             memo.isPinned = item.isPinned
             memo.trashedAt = item.trashedAt
             context.insert(memo)

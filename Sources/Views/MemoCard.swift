@@ -49,6 +49,12 @@ struct MemoCard: View {
         VStack(alignment: .leading, spacing: 10) {
             header
 
+            if !memo.title.isEmpty {
+                Text(memo.title)
+                    .font(.headline)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             ForEach(visibleSegments) { seg in
                 switch seg {
                 case .text(let t, _):
@@ -154,12 +160,12 @@ struct MemoCard: View {
             }
         }
         Button {
-            UIPasteboard.general.string = memo.plainText
+            UIPasteboard.general.string = memo.fullText
             Haptics.light()
         } label: {
             Label("复制", systemImage: "doc.on.doc")
         }
-        ShareLink(item: memo.plainText) {
+        ShareLink(item: memo.fullText) {
             Label("分享", systemImage: "square.and.arrow.up")
         }
         Divider()
