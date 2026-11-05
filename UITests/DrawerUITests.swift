@@ -208,4 +208,20 @@ final class DrawerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["restoreRevision"].exists, "历史版本应可恢复")
         snapshot("revision-diff")
     }
+
+    // MARK: - 编辑器返回时的未保存提示
+
+    func testBackWithChangesAsksToDiscard() {
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        editor.tap()
+        editor.typeText("不想保存的内容")
+        tapCenter(app.buttons["composerBack"])
+        let discard = app.buttons["放弃修改"]
+        XCTAssertTrue(discard.waitForExistence(timeout: 3), "有修改时返回应提示是否放弃")
+        discard.tap()
+        let leaked = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "不想保存的内容")).firstMatch
+        XCTAssertFalse(leaked.waitForExistence(timeout: 1.5), "放弃后不应保存")
+    }
 }

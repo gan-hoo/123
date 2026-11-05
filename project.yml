@@ -15,8 +15,8 @@ targets:
       path: Config/Info.plist
       properties:
         CFBundleDisplayName: Jin Notes
-        CFBundleShortVersionString: "1.8.2"
-        CFBundleVersion: "20"
+        CFBundleShortVersionString: "1.9.0"
+        CFBundleVersion: "21"
         CFBundleDevelopmentRegion: zh-Hans
         UILaunchScreen: {}
         UISupportedInterfaceOrientations:
@@ -45,8 +45,8 @@ targets:
         ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
         TARGETED_DEVICE_FAMILY: "1"
         SWIFT_VERSION: "5.0"
-        MARKETING_VERSION: "1.8.2"
-        CURRENT_PROJECT_VERSION: "20"
+        MARKETING_VERSION: "1.9.0"
+        CURRENT_PROJECT_VERSION: "21"
         ENABLE_PREVIEWS: YES
   ShinianUITests:
     type: bundle.ui-testing

@@ -18,8 +18,25 @@ struct ComposerView: View {
     @State private var pickerItems: [PhotosPickerItem] = []
     @State private var loaded = false
     @State private var focusRequest = false
+    @State private var confirmDiscard = false
+    @State private var showHistory = false
+    @State private var confirmDelete = false
+    /// 进入编辑器时的原始内容，用于判断是否有未保存的修改
+    @State private var originalText = ""
+    @State private var originalImages: [Data] = []
 
     private let maxImages = 9
+
+    private var hasChanges: Bool {
+        text != originalText || images != originalImages
+    }
+
+    private var dateLine: String {
+        let f = DateFormatter()
+        f.locale = Locale(identifier: "zh_CN")
+        f.dateFormat = "yyyy年M月d日 HH:mm"
+        return f.string(from: memo?.updatedAt ?? Date())
+    }
 
     private var canSave: Bool {
         !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty || !images.isEmpty
@@ -45,42 +62,42 @@ struct ComposerView: View {
     }
 
     var body: some View {
-        NavigationStack {
-            VStack(spacing: 0) {
-                editor
+        VStack(spacing: 0) {
+            topBar
 
-                if !images.isEmpty {
-                    imageStrip
-                }
+            Text(dateLine)
+                .font(.footnote)
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .frame(maxWidth: .infinity)
+                .padding(.top, 6)
 
-                let tags = suggestions
-                if !tags.isEmpty {
-                    ScrollView(.horizontal, showsIndicators: false) {
-                        HStack(spacing: 8) {
-                            ForEach(tags, id: \.self) { tag in
-                                Button("#" + tag) { apply(tag) }
-                                    .font(.subheadline)
-                                    .padding(.horizontal, 10)
-                                    .padding(.vertical, 5)
-                                    .background(accent.opacity(0.12), in: Capsule())
-                            }
+            editor
+
+            if !images.isEmpty {
+                imageStrip
+            }
+
+            let tags = suggestions
+            if !tags.isEmpty {
+                ScrollView(.horizontal, showsIndicators: false) {
+                    HStack(spacing: 8) {
+                        ForEach(tags, id: \.self) { tag in
+                            Button("#" + tag) { apply(tag) }
+                                .font(.subheadline)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(accent.opacity(0.12), in: Capsule())
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 8)
                     }
+                    .padding(.horizontal, 16)
+                    .padding(.vertical, 6)
                 }
+            }
 
-                Divider()
-                toolbarRow
-            }
-            .navigationTitle(memo == nil ? "新建笔记" : "编辑笔记")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .cancellationAction) {
-                    Button("取消") { dismiss() }
-                }
-            }
+            toolbarRow
         }
+        .background(Color(.systemBackground).ignoresSafeArea())
         .onAppear(perform: load)
         .onChange(of: pickerItems) { _, items in
             guard !items.isEmpty else { return }
@@ -94,6 +111,113 @@ struct ComposerView: View {
                 pickerItems = []
             }
         }
+        .confirmationDialog("放弃这次修改？", isPresented: $confirmDiscard, titleVisibility: .visible) {
+            Button("放弃修改", role: .destructive) { dismiss() }
+            Button("保存") { save() }
+        }
+        .confirmationDialog("删除这条笔记？", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("删除", role: .destructive) {
+                memo?.trashedAt = Date()
+                try? context.save()
+                dismiss()
+            }
+        } message: {
+            Text("笔记会移到回收站，30 天内可以恢复。")
+        }
+        .sheet(isPresented: $showHistory) {
+            if let memo {
+                ThemedRoot {
+                    RevisionHistoryView(memo: memo)
+                }
+            }
+        }
+    }
+
+    // MARK: - 顶栏（仿系统备忘录）
+
+    private var topBar: some View {
+        HStack(spacing: 10) {
+            Button {
+                if hasChanges && canSave {
+                    confirmDiscard = true
+                } else {
+                    dismiss()
+                }
+            } label: {
+                Image(systemName: "chevron.left")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .frame(width: 46, height: 46)
+                    .background(roundBackground(Circle()))
+            }
+            .accessibilityIdentifier("composerBack")
+            .accessibilityLabel("返回")
+
+            Spacer()
+
+            HStack(spacing: 0) {
+                ShareLink(item: text) {
+                    Image(systemName: "square.and.arrow.up")
+                        .frame(width: 48, height: 46)
+                }
+                .disabled(text.isEmpty)
+
+                Menu {
+                    Button {
+                        UIPasteboard.general.string = text
+                        Haptics.light()
+                    } label: {
+                        Label("复制全文", systemImage: "doc.on.doc")
+                    }
+                    if let memo, memo.revisionCount > 0 {
+                        Button {
+                            showHistory = true
+                        } label: {
+                            Label("历史版本（\(memo.revisionCount)）", systemImage: "clock.arrow.circlepath")
+                        }
+                    }
+                    if memo != nil {
+                        Divider()
+                        Button(role: .destructive) {
+                            confirmDelete = true
+                        } label: {
+                            Label("删除", systemImage: "trash")
+                        }
+                    }
+                } label: {
+                    Image(systemName: "ellipsis")
+                        .frame(width: 48, height: 46)
+                        .contentShape(Rectangle())
+                }
+                .accessibilityIdentifier("composerMore")
+            }
+            .font(.title3)
+            .foregroundStyle(.primary)
+            .padding(.horizontal, 4)
+            .background(roundBackground(Capsule()))
+
+            Button(action: save) {
+                Image(systemName: "checkmark")
+                    .font(.title3.weight(.semibold))
+                    .foregroundStyle(.white)
+                    .frame(width: 46, height: 46)
+                    .background(Circle().fill(canSave ? accent : Color.gray.opacity(0.35)))
+                    .shadow(color: canSave ? accent.opacity(0.35) : .clear, radius: 6, y: 2)
+            }
+            .disabled(!canSave)
+            .accessibilityIdentifier("sendMemo")
+            .accessibilityLabel("完成")
+        }
+        .padding(.horizontal, 16)
+        .padding(.top, 8)
+    }
+
+    /// 白底 + 细边 + 柔和阴影的圆形/胶囊按钮背景
+    private func roundBackground<S: Shape>(_ shape: S) -> some View {
+        shape
+            .fill(Color(.systemBackground))
+            .overlay(shape.stroke(Color.primary.opacity(0.08), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
     }
 
     private var editor: some View {
@@ -142,38 +266,40 @@ struct ComposerView: View {
         }
     }
 
+    /// 键盘上方的悬浮工具条
     private var toolbarRow: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: 0) {
             Button { insertTag() } label: {
                 Image(systemName: "number")
+                    .frame(maxWidth: .infinity, minHeight: 46)
             }
             .accessibilityIdentifier("insertTag")
             PhotosPicker(selection: $pickerItems,
                          maxSelectionCount: max(1, maxImages - images.count),
                          matching: .images) {
                 Image(systemName: "photo")
+                    .frame(maxWidth: .infinity, minHeight: 46)
             }
             .disabled(images.count >= maxImages)
             Button { insertList() } label: {
                 Image(systemName: "list.bullet")
+                    .frame(maxWidth: .infinity, minHeight: 46)
             }
             .accessibilityIdentifier("insertList")
-            Spacer()
-            Button(action: save) {
-                Image(systemName: "paperplane.fill")
-                    .font(.body)
-                    .foregroundStyle(.white)
-                    .frame(width: 54, height: 34)
-                    .background(canSave ? accent : Color.gray.opacity(0.35), in: Capsule())
+            Button {
+                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+            } label: {
+                Image(systemName: "keyboard.chevron.compact.down")
+                    .frame(maxWidth: .infinity, minHeight: 46)
             }
-            .disabled(!canSave)
-            .accessibilityIdentifier("sendMemo")
-            .accessibilityLabel("发送")
+            .accessibilityLabel("收起键盘")
         }
         .font(.title3)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 18)
-        .padding(.vertical, 10)
+        .foregroundStyle(.primary)
+        .padding(.horizontal, 8)
+        .background(roundBackground(Capsule()))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 
     // MARK: - Actions
@@ -187,6 +313,8 @@ struct ComposerView: View {
         } else if let presetTag {
             text = "#\(presetTag) "
         }
+        originalText = text
+        originalImages = images
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
             focusRequest = true
         }

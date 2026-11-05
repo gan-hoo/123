@@ -12,6 +12,16 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.9.0", date: "2026-11-05", title: "全新编辑器",
+            items: [
+                "编辑器布局改为类似系统备忘录：左上角返回，右上角分享 / 更多 / 完成",
+                "顶部居中显示笔记时间",
+                "工具栏改为键盘上方的悬浮条，新增「收起键盘」按钮",
+                "「更多」菜单可复制全文、查看历史版本、删除笔记",
+                "有未保存的修改时返回，会提示是否放弃",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.8.2", date: "2026-11-05", title: "界面调整",
             items: [
                 "编辑笔记改为全屏，顶部不再露出底下的页面",

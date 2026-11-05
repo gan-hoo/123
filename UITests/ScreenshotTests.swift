@@ -53,9 +53,13 @@ final class ScreenshotTests: XCTestCase {
             shoot(app, "\(appearance)-3-composer")
         }
         // 编辑已有笔记（全屏）
-        let cancel = app.buttons["取消"]
-        if cancel.exists {
-            cancel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let back = app.buttons["composerBack"]
+        if back.exists {
+            back.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let discard = app.buttons["放弃修改"]
+            if discard.waitForExistence(timeout: 2) {
+                discard.tap()
+            }
             sleep(1)
         }
         let cardMenu = app.buttons["memoMenu"].firstMatch
