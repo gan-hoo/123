@@ -63,7 +63,7 @@ struct ReviewView: View {
         .onAppear {
             if picks.isEmpty { shuffle() }
         }
-        .sheet(item: $editing) { memo in
+        .fullScreenCover(item: $editing) { memo in
             ThemedRoot {
                 ComposerView(memo: memo, presetTag: nil)
             }

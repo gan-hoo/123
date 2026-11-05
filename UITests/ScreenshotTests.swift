@@ -52,6 +52,21 @@ final class ScreenshotTests: XCTestCase {
             sleep(1)
             shoot(app, "\(appearance)-3-composer")
         }
+        // 编辑已有笔记（全屏）
+        if let cancel = Optional(app.buttons["取消"]), cancel.exists {
+            cancel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            sleep(1)
+        }
+        let menu = app.buttons["memoMenu"].firstMatch
+        if menu.waitForExistence(timeout: 3) {
+            menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            let edit = app.buttons["编辑"].firstMatch
+            if edit.waitForExistence(timeout: 3) {
+                edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+                sleep(2)
+                shoot(app, "\(appearance)-4-edit")
+            }
+        }
         app.terminate()
     }
 

@@ -12,6 +12,13 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "1.8.2", date: "2026-11-05", title: "界面调整",
+            items: [
+                "编辑笔记改为全屏，顶部不再露出底下的页面",
+                "侧边栏顶部去掉图标，只保留 Jin Notes 标题",
+            ]
+        ),
+        ChangelogEntry(
             version: "1.8.1", date: "2026-11-04", title: "细节优化",
             items: [
                 "修复列表下滑后顶部状态栏与导航栏颜色不一致的问题",

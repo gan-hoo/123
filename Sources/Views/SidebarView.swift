@@ -31,10 +31,6 @@ struct SidebarView: View {
         ScrollView(.vertical, showsIndicators: false) {
             VStack(alignment: .leading, spacing: 20) {
                 HStack(spacing: 10) {
-                    Image("Logo")
-                        .resizable()
-                        .frame(width: 36, height: 36)
-                        .clipShape(RoundedRectangle(cornerRadius: 9, style: .continuous))
                     Text("Jin Notes")
                         .font(.title2.bold())
                     Spacer()

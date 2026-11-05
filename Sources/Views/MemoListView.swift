@@ -111,11 +111,10 @@ struct MemoListView: View {
             }
             .presentationDetents([.medium, .large])
         }
-        .sheet(item: $editing) { memo in
+        .fullScreenCover(item: $editing) { memo in
             ThemedRoot {
                 ComposerView(memo: memo, presetTag: nil)
             }
-            .presentationDetents([.large])
         }
     }
 }
