@@ -53,13 +53,14 @@ final class ScreenshotTests: XCTestCase {
             shoot(app, "\(appearance)-3-composer")
         }
         // 编辑已有笔记（全屏）
-        if let cancel = Optional(app.buttons["取消"]), cancel.exists {
+        let cancel = app.buttons["取消"]
+        if cancel.exists {
             cancel.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             sleep(1)
         }
-        let menu = app.buttons["memoMenu"].firstMatch
-        if menu.waitForExistence(timeout: 3) {
-            menu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        let cardMenu = app.buttons["memoMenu"].firstMatch
+        if cardMenu.waitForExistence(timeout: 3) {
+            cardMenu.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
             let edit = app.buttons["编辑"].firstMatch
             if edit.waitForExistence(timeout: 3) {
                 edit.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
