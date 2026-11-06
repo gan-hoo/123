@@ -56,7 +56,7 @@ struct MemoListView: View {
         let items = filtered
         ZStack(alignment: .bottomTrailing) {
             ScrollView {
-                LazyVStack(spacing: 12) {
+                LazyVStack(spacing: 14) {
                     ForEach(items) { memo in
                         MemoCard(
                             memo: memo,
@@ -92,10 +92,16 @@ struct MemoListView: View {
                 Image(systemName: "plus")
                     .font(.title2.weight(.bold))
                     .foregroundStyle(.white)
-                    .frame(width: 58, height: 58)
-                    .background(accent, in: Circle())
-                    .shadow(color: accent.opacity(0.4), radius: 10, y: 4)
+                    .frame(width: Glass.enabled ? 36 : 58, height: Glass.enabled ? 36 : 58)
+                    .background {
+                        if !Glass.enabled {
+                            Circle().fill(accent)
+                                .shadow(color: accent.opacity(0.4), radius: 10, y: 4)
+                        }
+                    }
             }
+            .glassButton(prominent: true, tint: accent)
+            .controlSize(.large)
             .accessibilityIdentifier("newMemo")
             .accessibilityLabel("新建笔记")
             .padding(.trailing, 22)

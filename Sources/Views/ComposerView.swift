@@ -281,9 +281,10 @@ struct ComposerView: View {
             Image(systemName: "chevron.left")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.primary)
-                .frame(width: 46, height: 46)
-                .background(roundBackground(Circle()))
+                .frame(width: Glass.enabled ? 30 : 46, height: Glass.enabled ? 30 : 46)
+                .background { if !Glass.enabled { roundBackground(Circle()) } }
         }
+        .glassButton()
         .accessibilityIdentifier("composerBack")
         .accessibilityLabel("返回")
     }
@@ -309,7 +310,7 @@ struct ComposerView: View {
         .font(.title3)
         .foregroundStyle(.primary)
         .padding(.horizontal, 4)
-        .background(roundBackground(Capsule()))
+        .background(GlassShapeBackground(shape: Capsule()))
     }
 
     private var actionsCapsule: some View {
@@ -332,7 +333,7 @@ struct ComposerView: View {
         .font(.title3)
         .foregroundStyle(.primary)
         .padding(.horizontal, 4)
-        .background(roundBackground(Capsule()))
+        .background(GlassShapeBackground(shape: Capsule()))
     }
 
     @ViewBuilder
@@ -369,11 +370,16 @@ struct ComposerView: View {
             Text("编辑")
                 .font(.body.weight(.semibold))
                 .foregroundStyle(.white)
-                .padding(.horizontal, 18)
-                .frame(height: 46)
-                .background(Capsule().fill(accent))
-                .shadow(color: accent.opacity(0.35), radius: 6, y: 2)
+                .padding(.horizontal, Glass.enabled ? 6 : 18)
+                .frame(height: Glass.enabled ? 30 : 46)
+                .background {
+                    if !Glass.enabled {
+                        Capsule().fill(accent)
+                            .shadow(color: accent.opacity(0.35), radius: 6, y: 2)
+                    }
+                }
         }
+        .glassButton(prominent: true, tint: accent, shape: .capsule)
         .accessibilityIdentifier("startEditing")
     }
 
@@ -382,10 +388,15 @@ struct ComposerView: View {
             Image(systemName: "checkmark")
                 .font(.title3.weight(.semibold))
                 .foregroundStyle(.white)
-                .frame(width: 46, height: 46)
-                .background(Circle().fill(canSave ? accent : Color.gray.opacity(0.35)))
-                .shadow(color: canSave ? accent.opacity(0.35) : .clear, radius: 6, y: 2)
+                .frame(width: Glass.enabled ? 30 : 46, height: Glass.enabled ? 30 : 46)
+                .background {
+                    if !Glass.enabled {
+                        Circle().fill(canSave ? accent : Color.gray.opacity(0.35))
+                            .shadow(color: canSave ? accent.opacity(0.35) : .clear, radius: 6, y: 2)
+                    }
+                }
         }
+        .glassButton(prominent: true, tint: canSave ? accent : .gray)
         .disabled(!canSave)
         .accessibilityIdentifier("sendMemo")
         .accessibilityLabel("完成")
@@ -458,7 +469,7 @@ struct ComposerView: View {
         .font(.title3)
         .foregroundStyle(.primary)
         .padding(.horizontal, 8)
-        .background(roundBackground(Capsule()))
+        .background(GlassShapeBackground(shape: Capsule()))
         .padding(.horizontal, 12)
         .padding(.top, 8)
         // 键盘收起时，工具条再往下贴近底部

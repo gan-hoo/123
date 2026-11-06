@@ -12,6 +12,16 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "2.3.0", date: "2026-11-06", title: "Apple 原生 Liquid Glass",
+            items: [
+                "启用 iOS 26 系统原生 Liquid Glass：导航栏、搜索栏、菜单、弹窗由系统渲染为玻璃",
+                "新建按钮、编辑器的返回 / 分享 / 更多 / 完成 / 编辑、底部工具条改用系统玻璃按钮",
+                "玻璃只用在按钮和工具条上，笔记卡片保持实色，更清爽易读",
+                "卡片圆角加大、留白加多",
+                "iOS 26 以下系统保持原样式",
+            ]
+        ),
+        ChangelogEntry(
             version: "2.2.2", date: "2026-11-06", title: "恢复界面",
             items: [
                 "撤销 2.2.1 的界面改动，恢复为 2.2.0 的样式",
