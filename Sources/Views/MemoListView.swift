@@ -19,6 +19,8 @@ struct MemoListView: View {
     @State private var search = ""
     @State private var editingNotebook: Notebook?
     @State private var confirmDelete = false
+    @State private var showSearch = false
+    @FocusState private var searchFocused: Bool
 
     init(scope: ListScope) {
         self.scope = scope
@@ -57,6 +59,10 @@ struct MemoListView: View {
         ZStack(alignment: .bottomTrailing) {
             ScrollView {
                 LazyVStack(spacing: 12) {
+                    if showSearch {
+                        searchField
+                            .transition(.move(edge: .top).combined(with: .opacity))
+                    }
                     ForEach(items) { memo in
                         MemoCard(
                             memo: memo,
@@ -103,20 +109,72 @@ struct MemoListView: View {
         }
         .navigationTitle(title)
         .navigationBarTitleDisplayMode(.inline)
-        .searchable(text: $search, prompt: "搜索笔记")
-        .toolbar {
-            ToolbarItem(placement: .principal) {
-                VStack(spacing: 1) {
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(1)
-                    Text(items.isEmpty ? "无笔记" : "\(items.count) 条笔记")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+        .navigationBarBackButtonHidden(true)
+        .toolbar { listToolbar(count: items.count) }
+        .sheet(item: $editingNotebook) { nb in
+            ThemedRoot { NotebookEditorView(notebook: nb, nextOrder: 0) }
+        }
+        .confirmationDialog("删除笔记本「\(notebook?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {
+            Button("删除", role: .destructive) {
+                if let notebook {
+                    NotebookEditorView.delete(notebook, in: context)
+                    dismiss()
                 }
             }
+        } message: {
+            Text("里面的笔记不会被删除，会回到「所有笔记」。")
+        }
+    }
+
+    @ToolbarContentBuilder
+    private func listToolbar(count: Int) -> some ToolbarContent {
+            // 左侧：圆形返回 + 标题 / 数量
+            ToolbarItem(placement: .topBarLeading) {
+                HStack(spacing: 10) {
+                    RoundIconButton(systemName: "chevron.left") { dismiss() }
+                        .accessibilityIdentifier("navBack")
+                        .accessibilityLabel("返回")
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text(title)
+                            .font(.headline)
+                            .lineLimit(1)
+                        Text(count == 0 ? "无笔记" : "\(count) 条笔记")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+            // 隐藏居中的系统标题
+            ToolbarItem(placement: .principal) {
+                Color.clear.frame(width: 1, height: 1)
+            }
+            // 右侧：搜索 + 更多
             ToolbarItem(placement: .topBarTrailing) {
-                Menu {
+                HStack(spacing: 0) {
+                    Button {
+                        withAnimation(.easeOut(duration: 0.2)) {
+                            showSearch.toggle()
+                            if !showSearch { search = "" }
+                        }
+                        searchFocused = showSearch
+                    } label: {
+                        Image(systemName: "magnifyingglass")
+                            .frame(width: 40, height: 40)
+                    }
+                    .accessibilityIdentifier("listSearch")
+                    .accessibilityLabel("搜索")
+                    moreMenu
+                }
+                .font(.body.weight(.semibold))
+                .foregroundStyle(.primary)
+                .padding(.horizontal, 4)
+                .background(ChromeBackground(shape: Capsule()))
+            }
+    }
+
+    /// 更多菜单
+    private var moreMenu: some View {
+        Menu {
                     if filter != scope.filter {
                         Button {
                             withAnimation { filter = scope.filter }
@@ -132,25 +190,38 @@ struct MemoListView: View {
                             Label("删除笔记本", systemImage: "trash")
                         }
                     }
-                } label: {
-                    Image(systemName: "ellipsis.circle")
+            Button {
+                editor.open(memo: nil, presetTag: presetTag, notebookID: scope.notebookID)
+            } label: {
+                Label("新建笔记", systemImage: "square.and.pencil")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .frame(width: 40, height: 40)
+                .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("listMore")
+    }
+
+    /// 列表顶部的搜索框
+    private var searchField: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "magnifyingglass")
+                .foregroundStyle(.secondary)
+            TextField("搜索笔记", text: $search)
+                .focused($searchFocused)
+                .submitLabel(.search)
+                .accessibilityIdentifier("searchField")
+            if !search.isEmpty {
+                Button { search = "" } label: {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundStyle(.tertiary)
                 }
-                .accessibilityIdentifier("listMore")
             }
         }
-        .sheet(item: $editingNotebook) { nb in
-            ThemedRoot { NotebookEditorView(notebook: nb, nextOrder: 0) }
-        }
-        .confirmationDialog("删除笔记本「\(notebook?.name ?? "")」？", isPresented: $confirmDelete, titleVisibility: .visible) {
-            Button("删除", role: .destructive) {
-                if let notebook {
-                    NotebookEditorView.delete(notebook, in: context)
-                    dismiss()
-                }
-            }
-        } message: {
-            Text("里面的笔记不会被删除，会回到「所有笔记」。")
-        }
+        .padding(.horizontal, 14)
+        .frame(height: 44)
+        .background(ChromeBackground(shape: RoundedRectangle(cornerRadius: 14, style: .continuous)))
     }
 
     /// 空状态：笔记本图标 + 无笔记

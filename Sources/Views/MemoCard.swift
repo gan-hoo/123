@@ -103,11 +103,11 @@ struct MemoCard: View {
                 }
             }
         }
-        .padding(14)
+        .padding(16)
         .contentShape(Rectangle())
         .onTapGesture { onOpen?() }
         .frame(maxWidth: .infinity, alignment: .leading)
-        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
+        .background(Color(.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .contextMenu { menuItems }
         .sheet(isPresented: $showHistory) {
             ThemedRoot {
@@ -144,6 +144,7 @@ struct MemoCard: View {
                     .frame(width: 32, height: 22)
                     .contentShape(Rectangle())
             }
+            .tint(.secondary)
             .accessibilityIdentifier("memoMenu")
         }
     }

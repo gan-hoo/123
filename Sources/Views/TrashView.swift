@@ -60,6 +60,7 @@ struct TrashView: View {
                 ContentUnavailableView("回收站是空的", systemImage: "trash")
             }
         }
+        .roundBackButton()
         .navigationTitle("回收站")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
