@@ -139,7 +139,7 @@ struct MemoListView: View {
                         }
                     }
                 } label: {
-                    Image(systemName: "ellipsis.circle")
+                    Image(systemName: "ellipsis")
                 }
                 .accessibilityIdentifier("listMore")
             }
