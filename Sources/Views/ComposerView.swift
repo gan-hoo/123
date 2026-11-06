@@ -8,6 +8,8 @@ struct ComposerView: View {
     var presetTag: String?
     /// false：以阅读模式打开，点「编辑」后才可编辑
     var startEditing: Bool = true
+    /// 新建笔记时放入的笔记本
+    var notebookID: UUID? = nil
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismissPresentation
@@ -606,6 +608,7 @@ struct ComposerView: View {
             target.images = []
         } else {
             target = Memo(content: content)
+            target.notebookID = notebookID
             context.insert(target)
         }
         var newImages: [MemoImage] = []

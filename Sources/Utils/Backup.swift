@@ -2,7 +2,16 @@ import SwiftUI
 import SwiftData
 import UniformTypeIdentifiers
 
+struct BackupNotebook: Codable {
+    var uid: UUID
+    var name: String
+    var icon: String
+    var colorName: String
+    var order: Int
+}
+
 struct BackupMemo: Codable {
+    var notebookID: UUID?
     var title: String?
     var content: String
     var createdAt: Date
@@ -25,6 +34,7 @@ struct BackupFile: Codable {
     var version = 1
     var exportedAt = Date()
     var memos: [BackupMemo]
+    var notebooks: [BackupNotebook]?
 }
 
 struct BackupDocument: FileDocument {
@@ -53,9 +63,10 @@ enum Backup {
         "JinNotes-备份-\(Fmt.fileDate.string(from: Date()))"
     }
 
-    static func makeDocument(_ memos: [Memo]) throws -> BackupDocument {
-        let file = BackupFile(memos: memos.map {
-            BackupMemo(title: $0.title,
+    static func makeDocument(_ memos: [Memo], notebooks: [Notebook] = []) throws -> BackupDocument {
+        var file = BackupFile(memos: memos.map {
+            BackupMemo(notebookID: $0.notebookID,
+                       title: $0.title,
                        content: $0.content,
                        createdAt: $0.createdAt,
                        updatedAt: $0.updatedAt,
@@ -67,6 +78,9 @@ enum Backup {
                            BackupRevision(content: r.content, savedAt: r.savedAt, imageCount: r.imageCount)
                        })
         })
+        file.notebooks = notebooks.map {
+            BackupNotebook(uid: $0.uid, name: $0.name, icon: $0.icon, colorName: $0.colorName, order: $0.order)
+        }
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
         return BackupDocument(data: try encoder.encode(file))
@@ -84,6 +98,14 @@ enum Backup {
         let data = try Data(contentsOf: url)
         let file = try JSONDecoder().decode(BackupFile.self, from: data)
 
+        // 先恢复笔记本（已存在的跳过）
+        let existingBooks = Set(try context.fetch(FetchDescriptor<Notebook>()).map(\.uid))
+        for b in file.notebooks ?? [] where !existingBooks.contains(b.uid) {
+            let nb = Notebook(name: b.name, icon: b.icon, colorName: b.colorName, order: b.order)
+            nb.uid = b.uid
+            context.insert(nb)
+        }
+
         let existing = try context.fetch(FetchDescriptor<Memo>())
         var keys = Set(existing.map { key($0.createdAt, $0.content) })
 
@@ -96,6 +118,7 @@ enum Backup {
             let memo = Memo(content: item.content, createdAt: item.createdAt)
             memo.updatedAt = item.updatedAt
             memo.title = item.title ?? ""
+            memo.notebookID = item.notebookID
             memo.isPinned = item.isPinned
             memo.trashedAt = item.trashedAt
             context.insert(memo)

@@ -10,6 +10,8 @@ final class EditorPresenter {
     var presetTag: String?
     /// false：先以阅读模式打开，点「编辑」才开始编辑
     var startEditing = true
+    /// 新建笔记时放入的笔记本
+    var notebookID: UUID?
     /// 每次打开生成新的 id，让编辑器状态重新开始
     var session = UUID()
     /// 编辑器中是否有未保存的修改（右滑退出时用来决定是否提示）
@@ -17,8 +19,9 @@ final class EditorPresenter {
     /// 右滑退出时递增，编辑器收到后执行「返回」逻辑（有修改会提示）
     var backTrigger = 0
 
-    func open(memo: Memo?, presetTag: String? = nil, editing: Bool = true) {
+    func open(memo: Memo?, presetTag: String? = nil, editing: Bool = true, notebookID: UUID? = nil) {
         self.memo = memo
+        self.notebookID = notebookID
         self.presetTag = presetTag
         self.startEditing = editing || memo == nil
         session = UUID()

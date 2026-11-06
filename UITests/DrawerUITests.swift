@@ -37,6 +37,15 @@ final class DrawerUITests: XCTestCase {
         start.press(forDuration: 0.05, thenDragTo: end, withVelocity: velocity, thenHoldForDuration: 0)
     }
 
+    /// 首页 → 「所有笔记」
+    private func openAllNotes() {
+        let all = app.buttons["notebook-all"].firstMatch
+        let cell = all.exists ? all : app.cells["notebook-all"].firstMatch
+        XCTAssertTrue(cell.waitForExistence(timeout: 5), "首页应有「所有笔记」")
+        cell.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+        XCTAssertTrue(app.buttons["newMemo"].waitForExistence(timeout: 5), "应进入笔记列表")
+    }
+
     /// iOS 26 导航栏中直接 tap() 会因无障碍滚动失败，改为按坐标点击
     private func tapMenuButton() {
         let button = app.buttons["menuButton"]
@@ -134,6 +143,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 新建笔记
 
     func testPlusButtonCreatesMemo() {
+        openAllNotes()
         let add = app.buttons["newMemo"]
         XCTAssertTrue(add.waitForExistence(timeout: 3))
         add.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
@@ -161,6 +171,7 @@ final class DrawerUITests: XCTestCase {
         app.terminate()
         app.launchArguments = ["-uiTesting", "-legacySeed"]
         app.launch()
+        openAllNotes()
         let welcome = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "欢迎使用 Jin Notes")).firstMatch
         XCTAssertTrue(welcome.waitForExistence(timeout: 5), "旧欢迎笔记应改为 Jin Notes")
         let legacy = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "闪念")).firstMatch
@@ -175,6 +186,7 @@ final class DrawerUITests: XCTestCase {
     }
 
     func testEditCreatesRevisionHistory() {
+        openAllNotes()
         let menu = app.buttons["memoMenu"].firstMatch
         XCTAssertTrue(menu.waitForExistence(timeout: 3))
         tapCenter(menu)
@@ -212,6 +224,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 编辑器返回时的未保存提示
 
     func testBackWithChangesAsksToDiscard() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -228,6 +241,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 图文混排
 
     func testInlineImageAtCursor() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -252,6 +266,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 编辑器时间：下拉才显示
 
     func testComposerDateShowsOnPullDown() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -277,6 +292,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 撤销 / 重做
 
     func testUndoRedo() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -299,6 +315,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 编辑器左边缘右滑退出
 
     func testSwipeRightExitsEditor() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -321,6 +338,7 @@ final class DrawerUITests: XCTestCase {
     }
 
     func testSwipeRightWithChangesAsks() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let editor = app.textViews.firstMatch
         XCTAssertTrue(editor.waitForExistence(timeout: 3))
@@ -337,6 +355,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 标题
 
     func testTitleShowsOnCard() {
+        openAllNotes()
         tapCenter(app.buttons["newMemo"])
         let titleField = app.textFields["titleField"]
         XCTAssertTrue(titleField.waitForExistence(timeout: 3), "编辑器应有标题输入框")
@@ -353,6 +372,7 @@ final class DrawerUITests: XCTestCase {
     // MARK: - 点卡片先阅读，点「编辑」才编辑
 
     func testTapCardOpensReadMode() {
+        openAllNotes()
         let card = app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "不要追求完美")).firstMatch
         XCTAssertTrue(card.waitForExistence(timeout: 3))
         tapCenter(card)
@@ -366,5 +386,35 @@ final class DrawerUITests: XCTestCase {
         XCTAssertTrue(app.buttons["sendMemo"].waitForExistence(timeout: 3), "点编辑后应进入编辑模式")
         XCTAssertTrue(app.keyboards.firstMatch.waitForExistence(timeout: 3), "点编辑后应弹出键盘")
         snapshot("edit-mode")
+    }
+
+    // MARK: - 笔记本
+
+    func testCreateNotebookAndAddNote() {
+        let add = app.buttons["addNotebook"]
+        XCTAssertTrue(add.waitForExistence(timeout: 5), "首页应有新建笔记本按钮")
+        tapCenter(add)
+        let name = app.textFields["notebookName"]
+        XCTAssertTrue(name.waitForExistence(timeout: 3))
+        name.tap()
+        name.typeText("读书")
+        tapCenter(app.buttons["saveNotebook"])
+        snapshot("home-notebooks")
+
+        let row = app.buttons["notebook-读书"].exists ? app.buttons["notebook-读书"] : app.cells["notebook-读书"]
+        XCTAssertTrue(row.waitForExistence(timeout: 3), "首页应出现新笔记本")
+        tapCenter(row)
+        XCTAssertTrue(app.staticTexts["无笔记"].waitForExistence(timeout: 3), "空笔记本应显示「无笔记」")
+        snapshot("notebook-empty")
+
+        tapCenter(app.buttons["newMemo"])
+        let editor = app.textViews.firstMatch
+        XCTAssertTrue(editor.waitForExistence(timeout: 3))
+        editor.tap()
+        editor.typeText("笔记本里的第一条")
+        tapCenter(app.buttons["sendMemo"])
+        XCTAssertTrue(app.staticTexts.containing(NSPredicate(format: "label CONTAINS %@", "笔记本里的第一条")).firstMatch
+            .waitForExistence(timeout: 3), "新笔记应出现在这个笔记本里")
+        snapshot("notebook-with-note")
     }
 }

@@ -12,6 +12,18 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "2.2.0", date: "2026-11-06", title: "笔记本",
+            items: [
+                "首页改为笔记本列表：「所有笔记」+ 自己建的笔记本，显示图标和笔记数量",
+                "点右上角 ＋ 新建笔记本，可选名称、图标和颜色；长按或左滑可编辑、删除",
+                "点进笔记本查看里面的笔记；在笔记本里新建的笔记会自动放进去",
+                "空笔记本显示「无笔记」提示",
+                "笔记卡片菜单新增「移动到笔记本」",
+                "删除笔记本不会删除笔记，笔记回到「所有笔记」",
+                "备份包含笔记本",
+            ]
+        ),
+        ChangelogEntry(
             version: "2.1.1", date: "2026-11-06", title: "更流畅",
             items: [
                 "下拉显示时间不再卡顿：松手后才显示时间，滑动时不再每帧刷新整个编辑器",

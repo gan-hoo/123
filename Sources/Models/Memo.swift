@@ -5,6 +5,8 @@ import SwiftData
 final class Memo {
     /// 标题（可选）
     var title: String = ""
+    /// 所属笔记本（nil 表示未放入任何笔记本，只出现在「所有笔记」）
+    var notebookID: UUID? = nil
     var content: String = ""
     var createdAt: Date = Date()
     var updatedAt: Date = Date()
@@ -131,7 +133,34 @@ enum MemoFilter: Hashable {
     }
 }
 
+/// 笔记本（首页的大类）
+@Model
+final class Notebook {
+    var uid: UUID = UUID()
+    var name: String = ""
+    /// SF Symbols 图标名
+    var icon: String = "book.closed.fill"
+    /// NotebookColor 的名字
+    var colorName: String = "purple"
+    var order: Int = 0
+    var createdAt: Date = Date()
+
+    init(name: String, icon: String, colorName: String, order: Int) {
+        self.name = name
+        self.icon = icon
+        self.colorName = colorName
+        self.order = order
+    }
+}
+
+/// 笔记列表的范围：某个笔记本（nil 为所有笔记）+ 筛选条件
+struct ListScope: Hashable {
+    var notebookID: UUID?
+    var filter: MemoFilter = .all
+}
+
 enum Route: Hashable {
+    case notes(ListScope)
     case review
     case trash
     case settings

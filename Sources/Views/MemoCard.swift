@@ -5,6 +5,8 @@ import UIKit
 struct MemoCard: View {
     @Environment(\.accent) private var accent
     let memo: Memo
+    /// 可移动到的笔记本
+    var notebooks: [Notebook] = []
     var alwaysExpanded = false
     var onEdit: () -> Void
     /// 点击卡片：以阅读模式打开
@@ -171,6 +173,24 @@ struct MemoCard: View {
         }
         ShareLink(item: memo.fullText) {
             Label("分享", systemImage: "square.and.arrow.up")
+        }
+        if !notebooks.isEmpty {
+            Menu {
+                Button {
+                    memo.notebookID = nil
+                } label: {
+                    Label("不放入笔记本", systemImage: memo.notebookID == nil ? "checkmark" : "tray")
+                }
+                ForEach(notebooks) { nb in
+                    Button {
+                        memo.notebookID = nb.uid
+                    } label: {
+                        Label(nb.name, systemImage: memo.notebookID == nb.uid ? "checkmark" : nb.icon)
+                    }
+                }
+            } label: {
+                Label("移动到笔记本", systemImage: "folder")
+            }
         }
         Divider()
         Button(role: .destructive) {

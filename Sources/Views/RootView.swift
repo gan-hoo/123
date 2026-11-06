@@ -32,8 +32,8 @@ struct RootView: View {
                     filter: filter,
                     onSelectFilter: { f in
                         filter = f
-                        path = []
                         setDrawer(open: false)
+                        path = [.notes(ListScope(notebookID: nil, filter: f))]
                     },
                     onRoute: { r in
                         setDrawer(open: false)
@@ -48,9 +48,10 @@ struct RootView: View {
 
                 // 主页：整体跟随手指向右移动
                 NavigationStack(path: $path) {
-                    MemoListView(filter: $filter, onMenu: { setDrawer(open: true) })
+                    NotebookHomeView(onMenu: { setDrawer(open: true) })
                         .navigationDestination(for: Route.self) { route in
                             switch route {
+                            case .notes(let scope): MemoListView(scope: scope)
                             case .review: ReviewView()
                             case .trash: TrashView()
                             case .settings: SettingsView()
@@ -83,7 +84,8 @@ struct RootView: View {
                             .opacity(editorScrimOpacity(width: geo.size.width))
                             .ignoresSafeArea()
                         ComposerView(memo: editor.memo, presetTag: editor.presetTag,
-                                     startEditing: editor.startEditing)
+                                     startEditing: editor.startEditing,
+                                     notebookID: editor.notebookID)
                             .id(editor.session)
                             .shadow(color: .black.opacity(editorDragX > 0 ? 0.15 : 0), radius: 12)
                             .offset(x: editorDragX)
@@ -93,6 +95,10 @@ struct RootView: View {
                 }
             }
             .onAppear { drawerWidth = min(geo.size.width * 0.82, 340) }
+            .onChange(of: path) { _, p in
+                // 回到首页时，侧边栏的选中状态恢复为「全部笔记」
+                if p.isEmpty { filter = .all }
+            }
             .onChange(of: geo.size.width) { _, w in drawerWidth = min(w * 0.82, 340) }
         }
         .background(Color(.systemGroupedBackground).ignoresSafeArea())

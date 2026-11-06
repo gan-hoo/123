@@ -9,6 +9,7 @@ struct SettingsView: View {
     private var memos: [Memo]
 
     @Query private var everyMemo: [Memo]
+    @Query(sort: \Notebook.order) private var allNotebooks: [Notebook]
 
     @AppStorage(CloudSync.prefKey) private var iCloudSync = true
     @AppStorage(Theme.colorKey) private var colorRaw = ThemeColor.mint.rawValue
@@ -195,7 +196,7 @@ struct SettingsView: View {
         Section {
             Button {
                 do {
-                    backupDoc = try Backup.makeDocument(everyMemo)
+                    backupDoc = try Backup.makeDocument(everyMemo, notebooks: allNotebooks)
                     showExporter = true
                 } catch {
                     message = "备份失败：\(error.localizedDescription)"

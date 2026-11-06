@@ -40,6 +40,14 @@ final class ScreenshotTests: XCTestCase {
             sleep(1)
         }
 
+        // 进入「所有笔记」
+        let all = app.buttons["notebook-all"].exists ? app.buttons["notebook-all"] : app.cells["notebook-all"]
+        if all.waitForExistence(timeout: 3) {
+            all.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
+            sleep(1)
+            shoot(app, "\(appearance)-1c-all-notes")
+        }
+
         // 新建笔记
         let add = app.buttons["newMemo"]
         if add.waitForExistence(timeout: 3) {

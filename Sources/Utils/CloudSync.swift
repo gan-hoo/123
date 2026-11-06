@@ -45,7 +45,7 @@ enum CloudSync {
     }
 
     static func makeContainer() -> ModelContainer {
-        let schema = Schema([Memo.self, MemoImage.self, MemoRevision.self])
+        let schema = Schema([Memo.self, MemoImage.self, MemoRevision.self, Notebook.self])
         if isUITesting {
             let config = ModelConfiguration(schema: schema, isStoredInMemoryOnly: true, cloudKitDatabase: .none)
             // swiftlint:disable:next force_try
