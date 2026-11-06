@@ -30,7 +30,7 @@ struct TagTextEditor: UIViewRepresentable {
     /// false 时为只读（阅读模式）
     var editable: Bool = true
     /// 顶部下拉距离（正数）/ 往上滑动距离（负数），用于显示 / 隐藏时间
-    var onPull: ((CGFloat) -> Void)?
+    var onPull: ((Bool) -> Void)?
 
     static let insets = UIEdgeInsets(top: 10, left: 16, bottom: 10, right: 16)
 
@@ -73,7 +73,8 @@ struct TagTextEditor: UIViewRepresentable {
         }
 
         // 外部修改了文字（工具栏插入 #、列表、标签联想），且不在拼音输入中
-        if tv.markedTextRange == nil && Coordinator.serialize(tv.attributedText) != text {
+        if tv.markedTextRange == nil && c.lastSynced != text
+            && Coordinator.serialize(tv.attributedText) != text {
             c.load(text, into: tv)
             let end = tv.textStorage.length
             tv.selectedRange = NSRange(location: end, length: 0)
@@ -97,7 +98,10 @@ struct TagTextEditor: UIViewRepresentable {
         var parent: TagTextEditor
         var accent: UIColor = .systemGreen
         weak var textView: UITextView?
-        private var lastPull: CGFloat = 0
+        /// 时间是否已显示（只在越过阈值时通知 SwiftUI，避免滑动时每帧刷新导致卡顿）
+        private var dateShown = false
+        /// 最近一次同步给 SwiftUI 的文本，用来跳过不必要的整段比较
+        var lastSynced: String?
 
         init(_ parent: TagTextEditor) {
             self.parent = parent
@@ -150,6 +154,7 @@ struct TagTextEditor: UIViewRepresentable {
                 result.append(NSAttributedString(string: ns.substring(from: last), attributes: baseAttributes))
             }
             tv.attributedText = result
+            lastSynced = text
             restyle(tv)
         }
 
@@ -213,6 +218,7 @@ struct TagTextEditor: UIViewRepresentable {
 
         private func sync(_ tv: UITextView) {
             let s = Coordinator.serialize(tv.attributedText)
+            lastSynced = s
             if parent.text != s {
                 parent.text = s
             }
@@ -223,13 +229,24 @@ struct TagTextEditor: UIViewRepresentable {
             restyle(tv)
         }
 
+        /// 往上滑：隐藏时间
         func scrollViewDidScroll(_ scrollView: UIScrollView) {
-            // 正数：在顶部往下拉的距离；负数：往上滑动的距离
+            guard dateShown, scrollView.isDragging else { return }
             let pull = -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top)
-            // 只在变化明显时通知，避免频繁刷新
-            if abs(pull - lastPull) > 1 {
-                lastPull = pull
-                parent.onPull?(pull)
+            if pull < -12 {
+                dateShown = false
+                parent.onPull?(false)
+            }
+        }
+
+        /// 松手时判断：在顶部下拉超过一定距离则显示时间
+        func scrollViewWillEndDragging(_ scrollView: UIScrollView,
+                                       withVelocity velocity: CGPoint,
+                                       targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+            let pull = -(scrollView.contentOffset.y + scrollView.adjustedContentInset.top)
+            if pull > 45 && !dateShown {
+                dateShown = true
+                parent.onPull?(true)
             }
         }
 

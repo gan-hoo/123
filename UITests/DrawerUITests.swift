@@ -258,6 +258,7 @@ final class DrawerUITests: XCTestCase {
         // 先收起键盘
         app.buttons["收起键盘"].firstMatch.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5)).tap()
         sleep(1)
+        XCTAssertFalse(app.buttons["收起键盘"].exists, "键盘收起后不应显示「收起键盘」按钮")
         snapshot("composer-date-hidden")
         let start = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.15))
         let end = editor.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.45))

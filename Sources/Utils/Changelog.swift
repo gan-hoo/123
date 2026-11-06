@@ -12,6 +12,14 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
+            version: "2.1.1", date: "2026-11-06", title: "更流畅",
+            items: [
+                "下拉显示时间不再卡顿：松手后才显示时间，滑动时不再每帧刷新整个编辑器",
+                "修复下拉时出现两个时间重叠的问题",
+                "键盘收起后，工具条不再显示「收起键盘」按钮",
+            ]
+        ),
+        ChangelogEntry(
             version: "2.1.0", date: "2026-11-05", title: "标题与新图标",
             items: [
                 "编辑器新增「标题」，卡片上以粗体显示，搜索和字数统计包含标题",

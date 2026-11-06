@@ -38,7 +38,6 @@ struct ComposerView: View {
     @State private var images: [String: Data] = [:]
     @State private var controller = EditorController()
     /// 编辑区顶部下拉的距离，下拉时才显示时间
-    @State private var pullDistance: CGFloat = 0
     /// 下拉后固定显示时间，往上滑再隐藏
     @State private var showDate = false
     @State private var isEditing = true
@@ -142,18 +141,6 @@ struct ComposerView: View {
     /// 编辑区 + 下拉才显示的时间
     private var editorWithDate: some View {
         editor
-            .overlay(alignment: .top) { pullHint }
-    }
-
-    /// 下拉过程中渐显的时间（松手后若已拉够距离，会固定显示在顶部）
-    private var pullHint: some View {
-        Text(dateLine)
-            .font(.footnote)
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
-            .opacity(showDate ? 0 : Double(min(1, max(0, (pullDistance - 8) / 32))))
-            .offset(y: min(pullDistance, 60) / 2 - 6)
-            .allowsHitTesting(false)
     }
 
     /// 固定显示的时间
@@ -186,13 +173,9 @@ struct ComposerView: View {
     }
 
     /// 编辑区滚动：下拉超过一定距离固定显示时间，往上滑隐藏
-    private func handlePull(_ pull: CGFloat) {
-        pullDistance = max(0, pull)
-        if pull > 45 && !showDate {
-            withAnimation(.easeOut(duration: 0.2)) { showDate = true }
-        } else if pull < -12 && showDate {
-            withAnimation(.easeOut(duration: 0.2)) { showDate = false }
-        }
+    private func handlePull(_ show: Bool) {
+        guard show != showDate else { return }
+        withAnimation(.easeOut(duration: 0.2)) { showDate = show }
     }
 
     /// 输入 # 时的标签联想
@@ -452,13 +435,16 @@ struct ComposerView: View {
                     .frame(maxWidth: .infinity, minHeight: 46)
             }
             .accessibilityIdentifier("insertList")
-            Button {
-                UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
-            } label: {
-                Image(systemName: "keyboard.chevron.compact.down")
-                    .frame(maxWidth: .infinity, minHeight: 46)
+            // 只在键盘弹出时显示「收起键盘」
+            if keyboardVisible {
+                Button {
+                    UIApplication.shared.sendAction(#selector(UIResponder.resignFirstResponder), to: nil, from: nil, for: nil)
+                } label: {
+                    Image(systemName: "keyboard.chevron.compact.down")
+                        .frame(maxWidth: .infinity, minHeight: 46)
+                }
+                .accessibilityLabel("收起键盘")
             }
-            .accessibilityLabel("收起键盘")
             if CloudSync.isUITesting {
                 Button { insertSampleImage() } label: {
                     Image(systemName: "ladybug")
