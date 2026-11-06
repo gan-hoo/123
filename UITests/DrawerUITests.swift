@@ -417,16 +417,4 @@ final class DrawerUITests: XCTestCase {
             .waitForExistence(timeout: 3), "新笔记应出现在这个笔记本里")
         snapshot("notebook-with-note")
     }
-
-    // MARK: - 二级页面：圆形返回按钮与右滑返回
-
-    func testListBackButtonAndSwipeBack() {
-        openAllNotes()
-        snapshot("list-header")
-        tapCenter(app.buttons["navBack"].firstMatch)
-        XCTAssertTrue(app.buttons["addNotebook"].waitForExistence(timeout: 3), "点返回应回到首页")
-        openAllNotes()
-        drag(CGVector(dx: 0.01, dy: 0.5), CGVector(dx: 0.8, dy: 0.5), velocity: .default)
-        XCTAssertTrue(app.buttons["addNotebook"].waitForExistence(timeout: 3), "左边缘右滑应返回首页")
-    }
 }

@@ -12,17 +12,6 @@ struct ChangelogEntry: Identifiable {
 enum Changelog {
     static let entries: [ChangelogEntry] = [
         ChangelogEntry(
-            version: "2.2.1", date: "2026-11-06", title: "界面打磨",
-            items: [
-                "所有页面的按钮统一为白色圆形 / 胶囊样式（返回、搜索、更多、设置、换一批）",
-                "深色模式下按钮不再和背景混在一起",
-                "笔记列表顶部改为：圆形返回 + 左对齐的标题和数量，右侧搜索 / 更多；搜索框点了才出现",
-                "首页标题改为大标题，新建笔记本按钮统一样式",
-                "笔记卡片圆角和内边距加大，卡片上的 ··· 改为灰色",
-                "隐藏系统返回按钮后仍可从左边缘右滑返回",
-            ]
-        ),
-        ChangelogEntry(
             version: "2.2.0", date: "2026-11-06", title: "笔记本",
             items: [
                 "首页改为笔记本列表：「所有笔记」+ 自己建的笔记本，显示图标和笔记数量",

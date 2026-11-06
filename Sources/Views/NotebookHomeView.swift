@@ -51,8 +51,14 @@ struct NotebookHomeView: View {
                         .foregroundStyle(.secondary)
                         .textCase(nil)
                     Spacer()
-                    RoundIconButton(systemName: "plus", size: 34) {
+                    Button {
                         creating = true
+                    } label: {
+                        Image(systemName: "plus")
+                            .font(.headline.weight(.bold))
+                            .foregroundStyle(.primary)
+                            .frame(width: 34, height: 34)
+                            .background(Color(.tertiarySystemFill), in: Circle())
                     }
                     .accessibilityIdentifier("addNotebook")
                     .accessibilityLabel("新建笔记本")
@@ -66,11 +72,13 @@ struct NotebookHomeView: View {
         }
         .listStyle(.insetGrouped)
         .navigationTitle("Jin Notes")
-        .navigationBarTitleDisplayMode(.large)
+        .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarLeading) {
-                RoundIconButton(systemName: "line.3.horizontal", action: onMenu)
-                    .accessibilityIdentifier("menuButton")
+                Button(action: onMenu) {
+                    Image(systemName: "line.3.horizontal")
+                }
+                .accessibilityIdentifier("menuButton")
                 .accessibilityLabel("菜单")
             }
         }
@@ -111,7 +119,7 @@ struct NotebookRow: View {
             Image(systemName: icon)
                 .font(.title2)
                 .foregroundStyle(color)
-                .frame(width: 32, height: 32)
+                .frame(width: 34)
             Text(name)
                 .font(.title3)
                 .lineLimit(1)

@@ -47,7 +47,6 @@ struct ChangelogView: View {
                 }
             }
         }
-        .roundBackButton()
         .navigationTitle("更新日志")
         .navigationBarTitleDisplayMode(.inline)
     }

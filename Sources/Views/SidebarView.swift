@@ -34,10 +34,13 @@ struct SidebarView: View {
                     Text("Jin Notes")
                         .font(.title2.bold())
                     Spacer()
-                    RoundIconButton(systemName: "gearshape") {
+                    Button {
                         onRoute(.settings)
+                    } label: {
+                        Image(systemName: "gearshape")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
                     }
-                    .accessibilityLabel("设置")
                 }
 
                 HStack {

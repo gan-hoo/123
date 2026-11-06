@@ -393,7 +393,10 @@ struct ComposerView: View {
 
     /// 白底 + 细边 + 柔和阴影的圆形/胶囊按钮背景
     private func roundBackground<S: Shape>(_ shape: S) -> some View {
-        ChromeBackground(shape: shape)
+        shape
+            .fill(Color(.systemBackground))
+            .overlay(shape.stroke(Color.primary.opacity(0.08), lineWidth: 0.5))
+            .shadow(color: .black.opacity(0.08), radius: 8, y: 2)
     }
 
     private var editor: some View {

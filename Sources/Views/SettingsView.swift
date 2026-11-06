@@ -65,7 +65,6 @@ struct SettingsView: View {
                     .foregroundStyle(.secondary)
             }
         }
-        .roundBackButton()
         .navigationTitle("设置")
         .navigationBarTitleDisplayMode(.inline)
         .task(id: memos.count) {

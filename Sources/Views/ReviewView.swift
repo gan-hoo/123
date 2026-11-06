@@ -50,15 +50,15 @@ struct ReviewView: View {
             }
         }
         .background(Color(.systemGroupedBackground))
-        .roundBackButton()
         .navigationTitle("每日回顾")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
-                RoundIconButton(systemName: "shuffle") {
+                Button {
                     withAnimation { shuffle() }
+                } label: {
+                    Label("换一批", systemImage: "shuffle")
                 }
-                .accessibilityLabel("换一批")
                 .disabled(memos.isEmpty)
             }
         }

@@ -5,11 +5,7 @@ import Observation
 /// 这样从左边缘右滑时可以跟随手指、露出下面的主页。
 @Observable
 final class EditorPresenter {
-    var isOpen = false {
-        didSet { Self.isAnyOpen = isOpen }
-    }
-    /// 供 UIKit 手势判断编辑器是否打开
-    static var isAnyOpen = false
+    var isOpen = false
     var memo: Memo?
     var presetTag: String?
     /// false：先以阅读模式打开，点「编辑」才开始编辑
